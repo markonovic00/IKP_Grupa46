@@ -15,3 +15,5 @@ klijentov potpis.
 
 Na početku rada postoji fiksan broj dostavljača. Servis može da poveća ovaj broj ukoliko dođe do
 preopterećenja.
+
+!Problem: Cuvanje trenutnih aktivnih zahteva dok se ne dobije potpise (HASHMAP)
