@@ -1,78 +1,160 @@
-/*
-	Create a TCP socket
-*/
+#define WIN32_LEAN_AND_MEAN
 
-#include<stdio.h>
-#include<winsock2.h>
-#pragma warning(disable:4996)
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "conio.h"
 
-#pragma comment(lib,"ws2_32.lib") //Winsock Library
+#pragma comment (lib, "Ws2_32.lib")
+#pragma comment (lib, "Mswsock.lib")
+#pragma comment (lib, "AdvApi32.lib")
+#pragma warning( disable : 4996)
 
-int main(int argc, char* argv[])
+#pragma pack(1)
+
+#define SERVER_IP_ADDRESS "127.0.0.1"
+#define SERVER_PORT 27016
+#define BUFFER_SIZE 512
+
+
+struct studentInfo {
+	char ime[15];
+	char prezime[20];
+	short poeni;
+};
+
+enum Urgency {
+	NORMALNO,
+	HITNO,
+	JAKO_HITNO,
+};
+
+struct clientCall {
+	char food_name[20];
+	short quantity;
+	Urgency urgency;
+};
+
+// TCP client that use non-blocking sockets
+int main()
 {
-	WSADATA wsa;
-	SOCKET s;
-	struct sockaddr_in server;
-	char* message, server_reply[2000];
-	int recv_size;
+	// Socket used to communicate with server
+	SOCKET connectSocket = INVALID_SOCKET;
 
-	printf("\nInitialising Winsock...");
-	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+	// Variable used to store function return value
+	int iResult;
+
+	// Buffer we will use to store message
+	char dataBuffer[BUFFER_SIZE];
+
+	// WSADATA data structure that is to receive details of the Windows Sockets implementation
+	WSADATA wsaData;
+
+	// Initialize windows sockets library for this process
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
-		printf("Failed. Error Code : %d", WSAGetLastError());
+		printf("WSAStartup failed with error: %d\n", WSAGetLastError());
 		return 1;
 	}
 
-	printf("Initialised.\n");
+	// create a socket
+	connectSocket = socket(AF_INET,
+		SOCK_STREAM,
+		IPPROTO_TCP);
 
-	//Create a socket
-	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+	if (connectSocket == INVALID_SOCKET)
 	{
-		printf("Could not create socket : %d", WSAGetLastError());
-	}
-
-	printf("Socket created.\n");
-
-
-	server.sin_addr.s_addr = inet_addr("127.0.0.1");
-	server.sin_family = AF_INET;
-	//InetPton(AF_INET, _T("192.168.1.1"), &RecvAddr.sin_addr.s_addr);
-	server.sin_port = htons(8888);
-
-	//Connect to remote server
-	if (connect(s, (struct sockaddr*)&server, sizeof(server)) < 0)
-	{
-		puts("connect error");
+		printf("socket failed with error: %ld\n", WSAGetLastError());
+		WSACleanup();
 		return 1;
 	}
 
-	puts("Connected");
+	// Create and initialize address structure
+	sockaddr_in serverAddress;
+	serverAddress.sin_family = AF_INET;								// IPv4 protocol
+	serverAddress.sin_addr.s_addr = inet_addr(SERVER_IP_ADDRESS);	// ip address of server
+	serverAddress.sin_port = htons(SERVER_PORT);					// server port
 
-	//Send some data
-	message = (char *)"Prva porukica sa klijenta ka serveru";
-	if (send(s, message, strlen(message), 0) < 0)
+	// Connect to server specified in serverAddress and socket connectSocket
+	iResult = connect(connectSocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress));
+	if (iResult == SOCKET_ERROR)
 	{
-		puts("Send failed");
+		printf("Unable to connect to server.\n");
+		closesocket(connectSocket);
+		WSACleanup();
 		return 1;
 	}
-	puts("Data Send\n");
 
-	//Receive a reply from the server
-	if ((recv_size = recv(s, server_reply, 2000, 0)) == SOCKET_ERROR)
+	//promenljiva tipa studentInfo cija ce se polja popunuti i cela struktira poslati u okviru jedne poruke
+	studentInfo student;
+	short poeni;
+
+	clientCall order;
+	short quantity;
+	Urgency urgency;
+
+	strcpy_s(order.food_name, "Kineska");
+	order.quantity = htons(2);
+	order.urgency = NORMALNO;
+
+	while (true)
 	{
-		puts("recv failed");
+		printf("Enter za slanje podatka \n");
+		// Unos potrebnih podataka koji ce se poslati serveru
+		//printf("Unesite ime studenta: ");
+		//gets_s(student.ime, 15);
+
+		//printf("Unesite prezime studenta: ");
+		//gets_s(student.prezime, 20);
+
+		//printf("Unesite osvojene poene na testu: ");
+		//scanf("%d", &poeni);
+		//student.poeni = htons(poeni);  //obavezna funkcija htons() jer cemo slati podatak tipa short 
+		getchar();    //pokupiti enter karakter iz bafera tastature
+
+
+		// Slanje pripremljene poruke zapisane unutar strukture studentInfo
+		//prosledjujemo adresu promenljive student u memoriji, jer se na toj adresi nalaze podaci koje saljemo
+		//kao i velicinu te strukture (jer je to duzina poruke u bajtima)
+		iResult = send(connectSocket, (char*)&order, (int)sizeof(clientCall), 0);
+
+		// Check result of send function
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(connectSocket);
+			WSACleanup();
+			return 1;
+		}
+
+		printf("Message successfully sent. Total bytes: %ld\n", iResult);
+
+		printf("\nPress 'x' to exit or any other key to continue: ");
+		if (getch() == 'x')
+			break;
 	}
 
-	puts("Reply received\n");
+	// Shutdown the connection since we're done
+	iResult = shutdown(connectSocket, SD_BOTH);
 
-	//Add a NULL terminating character to make it a proper string before printing
-	server_reply[recv_size] = '\0';
-	puts(server_reply);
+	// Check if connection is succesfully shut down.
+	if (iResult == SOCKET_ERROR)
+	{
+		printf("Shutdown failed with error: %d\n", WSAGetLastError());
+		closesocket(connectSocket);
+		WSACleanup();
+		return 1;
+	}
 
-	closesocket(s);
+	Sleep(1000);
+
+	// Close connected socket
+	closesocket(connectSocket);
+
+	// Deinitialize WSA library
 	WSACleanup();
-
-	getchar();
 
 	return 0;
 }
