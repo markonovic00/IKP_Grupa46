@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "conio.h"
+#include "request.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
@@ -16,7 +17,7 @@
 
 #define SERVER_PORT 27016
 #define BUFFER_SIZE 512
-#define MAX_CLIENTS 3
+#define MAX_CLIENTS 100
 
 
 struct studentInfo {
@@ -25,17 +26,13 @@ struct studentInfo {
 	short poeni;
 };
 
-enum Urgency {
-	NORMALNO,
-	HITNO,
-	JAKO_HITNO,
-};
 
 struct clientCall {
 	char food_name[20];
 	short quantity;
 	Urgency urgency;
 };
+
 
 // TCP server that use non-blocking sockets
 int main()
@@ -134,6 +131,7 @@ int main()
 
 	studentInfo* student;
 	clientCall* order;
+	NodeRequest* head = NULL;
 
 	while (true)
 	{
@@ -226,8 +224,9 @@ int main()
 
 						printf("Kolicina: %d  \n", ntohs(order->quantity));
 						printf("Hitnost: %d \n", ntohs(order->urgency));
-						printf("_______________________________  \n");
-
+						printf("_______________________________ \n");
+						appendList(&head, order->food_name, (char*)"Dummy", (char*)"Grad", order->quantity, 100, order->urgency);
+						printf("_______________________________BrojZahteva: %d \n", countList(head));
 
 					}
 					else if (iResult == 0)
