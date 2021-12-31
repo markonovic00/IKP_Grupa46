@@ -26,6 +26,11 @@ struct studentInfo {
 	short poeni;
 };
 
+struct replyClient {
+	u_short port;
+	bool accepted;
+};
+
 
 struct clientCall {
 	char food_name[20];
@@ -132,6 +137,7 @@ int main()
 	studentInfo* student;
 	clientCall* order;
 	NodeRequest* head = NULL;
+	replyClient reply;
 
 	while (true)
 	{
@@ -164,7 +170,7 @@ int main()
 			if (_kbhit()) //check if some key is pressed
 			{
 				_getch();
-				printf("Primena racunarskih mreza u infrstrukturnim sistemima 2019/2020\n");
+				printf("Waiting...\n");
 			}
 			continue;
 		}
@@ -216,8 +222,8 @@ int main()
 						dataBuffer[iResult] = '\0';
 						printf("Message received from client (%d):\n", i + 1);
 
-						//primljenoj poruci u memoriji pristupiti preko pokazivaca tipa (studentInfo *)
-						//jer znamo format u kom je poruka poslata a to je struct studentInfo
+						//primljenoj poruci u memoriji pristupiti preko pokazivaca 
+						//jer znamo format u kom je poruka poslata 
 						order = (clientCall*)dataBuffer;
 
 						printf("Naziv hrane: %s  \n", order->food_name);
@@ -227,6 +233,20 @@ int main()
 						printf("_______________________________ \n");
 						appendList(&head, order->food_name, (char*)"Dummy", (char*)"Grad", order->quantity, 100, order->urgency);
 						printf("_______________________________BrojZahteva: %d \n", countList(head));
+						reply.accepted = 1;
+						reply.port = 9000;
+						iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
+
+						// Check result of send function
+						if (iResult == SOCKET_ERROR)
+						{
+							printf("send failed with error: %d\n", WSAGetLastError());
+							closesocket(clientSockets[i]);
+							WSACleanup();
+							return 1;
+						}
+
+						printf("Message successfully sent. Total bytes: %ld\n", iResult);
 
 					}
 					else if (iResult == 0)

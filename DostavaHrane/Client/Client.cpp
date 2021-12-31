@@ -25,6 +25,11 @@ struct studentInfo {
 	short poeni;
 };
 
+struct replyClient {
+	u_short port;
+	bool accepted;
+};
+
 enum Urgency {
 	NORMALNO,
 	HITNO,
@@ -94,6 +99,7 @@ int main()
 	clientCall order;
 	short quantity;
 	Urgency urgency;
+	replyClient* reply;
 
 	strcpy_s(order.food_name, "Kineska");
 	order.quantity = htons(2);
@@ -130,6 +136,15 @@ int main()
 		}
 
 		printf("Message successfully sent. Total bytes: %ld\n", iResult);
+
+		iResult = recv(connectSocket, dataBuffer, BUFFER_SIZE, 0);
+		if (iResult > 0) {
+			printf("Bytes received: %d\n", iResult);
+			dataBuffer[iResult] = '\0';
+			reply = (replyClient*)dataBuffer;
+			printf("Port: %d\n", reply->port);
+			printf("Accepted: %d\n", reply->accepted);
+		}
 
 		printf("\nPress 'x' to exit or any other key to continue: ");
 		if (getch() == 'x')
