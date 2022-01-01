@@ -62,7 +62,7 @@ char* ht_search(HashTable* table, char* key) {
 	return NULL;
 }
 
-void ht_insert(HashTable* table, char* key, char* value) {
+int ht_insert(HashTable* table, char* key, char* value) { //void bila
 	// Create the item
 	Ht_item* item = create_item(key, value);
 
@@ -78,26 +78,33 @@ void ht_insert(HashTable* table, char* key, char* value) {
 			printf("Insert Error: Hash Table is full\n");
 			// Remove the create item
 			free_item(item);
-			return;
+			return -1;
 		}
 
 		// Insert directly
 		table->items[index] = item;
 		table->count++;
+		return atoi(key);
 	}
 
 	else {
 		// Scenario 1: We only need to update value
 		if (strcmp(current_item->key, key) == 0) {
-			strcpy(table->items[index]->value, value);
-			return;
+			free_item(item);
+			int oldKey = atoi(key);
+			oldKey++;
+			char newKey[20];
+			itoa(oldKey, newKey, 10);
+			return ht_insert(table,newKey, value);
+			//strcpy(table->items[index]->value, value); //Samo ovo ostaje i if i return
+			//return;
 		}
 
 		else {
 			// Scenario 2: Collision
 			// We will handle case this a bit later
 			//handle_collision(table, index, item);
-			return;
+			return -1;
 		}
 	}
 }

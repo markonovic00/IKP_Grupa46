@@ -4,7 +4,7 @@
 
 void printList(NodeRequest* n) {
 	while (n != NULL) {
-		printf("ID: %d \n %s-%d-%d-%d\n%s %s", n->idOrder, n->foodName, n->quantity, n->price, n->urgency,n->address,n->city);
+		printf("ID: %d \n %s-%d-%d-%d\n%s %s", n->idOrder, n->foodName, n->quantity, n->price, n->urgency, n->address, n->city);
 		printf("---------------------\n");
 		n = n->next;
 	}
@@ -37,7 +37,8 @@ void appendList(NodeRequest** head_ref, char* _foodName, char* _address, char* _
 	newNode->idOrder = last->idOrder + 1;
 	last->next = newNode;
 }
-
+//NA NEKOLIKO IZVRSENIH ZAHTEVA PROMENITI ID-OVE ISPOCEKTA
+//PROBLEM INDEKSIRANJE TREDOVA
 void deleteNode(NodeRequest** head_ref, int position)
 {
 	// If linked list is empty
@@ -70,4 +71,16 @@ void deleteNode(NodeRequest** head_ref, int position)
 	free(temp->next); // Free memory
 
 	temp->next = next; // Unlink the deleted node from list
+}
+
+int countList(NodeRequest* n)
+{
+	int count = 0;
+	while (n != NULL)
+	{
+		count++;
+		n = n->next;
+	}
+
+	return count;
 }

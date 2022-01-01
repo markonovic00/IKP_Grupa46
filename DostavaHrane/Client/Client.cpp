@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "conio.h"
+#include "../Common/request.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
@@ -30,17 +31,13 @@ struct replyClient {
 	bool accepted;
 };
 
-enum Urgency {
-	NORMALNO,
-	HITNO,
-	JAKO_HITNO,
-};
 
 struct clientCall {
 	char food_name[20];
 	short quantity;
 	Urgency urgency;
 };
+
 
 // TCP client that use non-blocking sockets
 int main()
@@ -97,9 +94,17 @@ int main()
 	short poeni;
 
 	clientCall order;
-	short quantity;
+	int quantity=0;
+	int hitnost=0;
 	Urgency urgency;
 	replyClient* reply;
+	replyClient iReply;
+	NodeRequest clientOrder;
+	clientOrder.idOrder = htons(0);
+	clientOrder.next = NULL;
+	clientOrder.price = htons(0);
+	clientOrder.urgency = NORMALNO;
+	clientOrder.quantity = htons(0);
 
 	strcpy_s(order.food_name, "Kineska");
 	order.quantity = htons(2);
@@ -107,14 +112,37 @@ int main()
 
 	while (true)
 	{
-		printf("Enter za slanje podatka \n");
-		// Unos potrebnih podataka koji ce se poslati serveru
-		//printf("Unesite ime studenta: ");
-		//gets_s(student.ime, 15);
+		printf("Unesite naziv hrane: ");
+		gets_s(clientOrder.foodName, 20);
 
-		//printf("Unesite prezime studenta: ");
-		//gets_s(student.prezime, 20);
+		printf("Unesite kolicinu: ");
+		scanf("%d", &quantity);
+		
+		clientOrder.quantity = htons(quantity);
 
+		printf("Hitnost: \n  1.Normalno\n  2.Hitno\n  Izaberite: ");
+		scanf("%d", &hitnost);
+		getchar();
+		switch (hitnost)
+		{
+		case 1:
+			clientOrder.urgency = NORMALNO;
+			break;
+		case 2:
+			clientOrder.urgency = HITNO;
+			break;
+		default:
+			clientOrder.urgency = NORMALNO;
+			break;
+		}
+
+		printf("Unesite ulicu i broj: "); // proveriti unos stringa...
+		scanf("%[^\n]%*c", clientOrder.address);
+		fflush(stdin);
+		printf("Unesite grad: ");
+		scanf("%s", clientOrder.city);
+		fflush(stdin);
+		
 		//printf("Unesite osvojene poene na testu: ");
 		//scanf("%d", &poeni);
 		//student.poeni = htons(poeni);  //obavezna funkcija htons() jer cemo slati podatak tipa short 
@@ -124,7 +152,7 @@ int main()
 		// Slanje pripremljene poruke zapisane unutar strukture studentInfo
 		//prosledjujemo adresu promenljive student u memoriji, jer se na toj adresi nalaze podaci koje saljemo
 		//kao i velicinu te strukture (jer je to duzina poruke u bajtima)
-		iResult = send(connectSocket, (char*)&order, (int)sizeof(clientCall), 0);
+		iResult = send(connectSocket, (char*)&clientOrder, (int)sizeof(NodeRequest), 0);
 
 		// Check result of send function
 		if (iResult == SOCKET_ERROR)
@@ -142,8 +170,14 @@ int main()
 			printf("Bytes received: %d\n", iResult);
 			dataBuffer[iResult] = '\0';
 			reply = (replyClient*)dataBuffer;
+			iReply = *(replyClient*)dataBuffer;
 			printf("Port: %d\n", reply->port);
 			printf("Accepted: %d\n", reply->accepted);
+		}
+
+		if (iReply.accepted > 0) {
+			printf("Porudzbina prihvacena, cekajte dostavljaca.\n");
+
 		}
 
 		printf("\nPress 'x' to exit or any other key to continue: ");

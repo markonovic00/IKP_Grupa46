@@ -21,9 +21,21 @@
     <ClCompile Include="hashtable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="clientthread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="serverthread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hashtable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="clientthread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serverthread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

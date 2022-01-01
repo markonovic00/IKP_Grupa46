@@ -7,7 +7,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "conio.h"
-#include "request.h"
+#include "../Common/delivery.h"
+#include "../Common/request.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
@@ -137,6 +138,7 @@ int main()
 	studentInfo* student;
 	clientCall* order;
 	NodeRequest* head = NULL;
+	NodeRequest* clientOrder;
 	replyClient reply;
 
 	while (true)
@@ -224,17 +226,19 @@ int main()
 
 						//primljenoj poruci u memoriji pristupiti preko pokazivaca 
 						//jer znamo format u kom je poruka poslata 
-						order = (clientCall*)dataBuffer;
+						clientOrder = (NodeRequest*)dataBuffer;
+						clientOrder->price = 1000;
+						printf("Naziv hrane: %s  \n", clientOrder->foodName);
 
-						printf("Naziv hrane: %s  \n", order->food_name);
-
-						printf("Kolicina: %d  \n", ntohs(order->quantity));
-						printf("Hitnost: %d \n", ntohs(order->urgency));
+						printf("Kolicina: %d  \n", ntohs(clientOrder->quantity));
+						printf("Hitnost: %d \n", clientOrder->urgency);
+						printf("Adresa: %s %s \n",clientOrder->address,clientOrder->city);
+						printf("Dummy cena: %d\n", clientOrder->price);
 						printf("_______________________________ \n");
-						appendList(&head, order->food_name, (char*)"Dummy", (char*)"Grad", order->quantity, 100, order->urgency);
+						appendList(&head, clientOrder->foodName, clientOrder->address, clientOrder->city, ntohs(clientOrder->quantity), clientOrder->price, clientOrder->urgency);
 						printf("_______________________________BrojZahteva: %d \n", countList(head));
 						reply.accepted = 1;
-						reply.port = 9000;
+						reply.port = 9000+countList(head); // poigrati se sa portovima
 						iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
 
 						// Check result of send function

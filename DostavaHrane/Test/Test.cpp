@@ -1,8 +1,9 @@
-#include <Windows.h>
 #include <process.h>
 #include <stdio.h>
 #include <string.h>
 #include "hashtable.h"
+#include "serverthread.h"
+#include <shellapi.h>
 
 struct NodeRequest {
 	u_short idOrder;
@@ -32,7 +33,7 @@ unsigned int __stdcall twoMain(void* data) {
 	while (1) {
 		int dt = *(int*)data;
 		WaitForSingleObject(ghMutex, INFINITE); //Bez ovoga se bore za resurs, a sa time je resurs zakljucan
-		printf("Trhead writing: %d\n", dt);
+		//printf("Trhead writing: %d\n", dt);
 		Sleep(500);
 		ReleaseMutex(ghMutex); // Resurs oslobodjen
 	}
@@ -104,9 +105,11 @@ int main(int argc, char* argv[])
 	HANDLE hashHandle[1000];
 
 	HashTable* ht = create_table(CAPACITY);
-	ht_insert(ht, (char*)"9000", (char*)"prvaPor");
-	ht_insert(ht, (char*)"9001", (char*)"prvaPor");
-	
+	ht_insert(ht, (char*)"9000", (char*)"10000");
+	ht_insert(ht, (char*)"9001", (char*)"10001");
+	int keyNeki = ht_insert(ht, (char*)"9000", (char*)"10002"); //Hash tablea mu kaze na kojem portu da otvara i sta :D
+	//Value je isti broj porta kao i key samo 10k a ne 9k 
+	printf("%d\n", keyNeki);
 	
 
 	for (i = 0; i < 1000; i++) {
@@ -126,19 +129,35 @@ int main(int argc, char* argv[])
 	int b = 1;
 	main[0] = (HANDLE)_beginthreadex(0, 0, &twoMain, &a, 0, 0);
 	main[1]= (HANDLE)_beginthreadex(0, 0, &twoMain, &b, 0, 0);
-	WaitForSingleObject(main[0], INFINITE); // RADI KOLIKO ZELIS
-	WaitForSingleObject(main[1], INFINITE); // RADI KOLIKO ZELIS
+	WaitForSingleObject(main[0], 500); // RADI KOLIKO ZELIS
+	WaitForSingleObject(main[1], 500); // RADI KOLIKO ZELIS
 	CloseHandle(main[0]);
 	CloseHandle(main[1]);
 
+	HANDLE server[2];
+
+	int port1 = 8888;
+	int port2 = 9999;
+	
+
+	//server[0] = (HANDLE)_beginthreadex(0, 0, &serverTherad, &port1, 0, 0);
+	//server[1] = (HANDLE)_beginthreadex(0, 0, &serverTherad, &port2, 0, 0);
+
+	//WaitForMultipleObjects(2, server, TRUE, INFINITE);
+	
+	//CloseHandle(server[0]);
+	//CloseHandle(server[1]);
+
+	
+
 	//CHECK IF THREAD STILL RUNNING
-	DWORD result = WaitForSingleObject(myhandle[0], INFINITE);
-	if (result == WAIT_OBJECT_0) {
+	//DWORD result = WaitForSingleObject(myhandle[0], INFINITE);
+	//if (result == WAIT_OBJECT_0) {
 		//Thread ended
-	}
-	else {
+	//}
+	//else {
 		//Thread still running
-	}
+	//}
 	//END CHECK
 	
 	

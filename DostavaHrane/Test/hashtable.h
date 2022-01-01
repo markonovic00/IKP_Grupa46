@@ -30,7 +30,7 @@ void free_table(HashTable* table);
 
 char* ht_search(HashTable* table, char* key);
 
-void ht_insert(HashTable* table, char* key, char* value);
+int ht_insert(HashTable* table, char* key, char* value);
 
 void print_table(HashTable* table);
 
