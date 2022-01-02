@@ -125,8 +125,6 @@ unsigned int __stdcall serverTherad(void* data) {
 		}
     }
 
-    printf("kraj nzm sto\n");
-
     getchar();
 
     closesocket(s);

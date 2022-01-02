@@ -1,12 +1,12 @@
 #ifndef HASHTABLE_DOT_H
 #define HASHTABLE_DOT_H
-#define CAPACITY 2000 //Size of the Hash Table (Maksimalan broj aktivnih dostavljaca) 
+#define CAPACITY 1000 //Size of the Hash Table (Maksimalan broj aktivnih dostavljaca) 
 
 typedef struct Ht_item Ht_item;
 struct  Ht_item
 {
-	char* key; //Port za komunikaciju sa servisom
-	char* value; //Port za komunikaciju sa klijentom
+    char* key; //Port za komunikaciju sa servisom
+    char* value; //Port za komunikaciju sa klijentom
 };
 
 typedef struct HashTable HashTable;
@@ -34,6 +34,7 @@ int ht_insert(HashTable* table, char* key, char* value);
 int ht_insert_auto_val(HashTable* table, char* key);
 
 void print_table(HashTable* table);
+Ht_item* ht_get_item_pointer(HashTable* table, char* key);
 
 #endif // !HASHTABLE_DOT_H
 

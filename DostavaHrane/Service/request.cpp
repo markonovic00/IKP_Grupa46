@@ -1,6 +1,8 @@
 #include "request.h"
 
 #include <stdio.h>
+#include <corecrt_malloc.h>
+#include <string.h>
 
 void printList(NodeRequest* n) {
 	while (n != NULL) {
@@ -10,7 +12,7 @@ void printList(NodeRequest* n) {
 	}
 }
 
-void appendList(NodeRequest** head_ref, char* _foodName, char* _address, char* _city, char _quantity, u_short _price, Urgency _urgency)
+void appendList(NodeRequest** head_ref, char* _foodName, char* _address, char* _city, char _quantity, short _price, Urgency _urgency)
 {
 
 	NodeRequest* last = *head_ref;
@@ -37,8 +39,7 @@ void appendList(NodeRequest** head_ref, char* _foodName, char* _address, char* _
 	newNode->idOrder = last->idOrder + 1;
 	last->next = newNode;
 }
-//NA NEKOLIKO IZVRSENIH ZAHTEVA PROMENITI ID-OVE ISPOCEKTA
-//PROBLEM INDEKSIRANJE TREDOVA
+
 void deleteNode(NodeRequest** head_ref, int position)
 {
 	// If linked list is empty
@@ -71,6 +72,24 @@ void deleteNode(NodeRequest** head_ref, int position)
 	free(temp->next); // Free memory
 
 	temp->next = next; // Unlink the deleted node from list
+}
+
+void getNode(NodeRequest* head, NodeRequest** retVal, int position) { //Vraca index od 0,1,2..
+	for (int i = 0; head != NULL && i <= position; i++) {
+		*retVal = head;
+		head = head->next;
+	}
+}
+
+int findPosition(NodeRequest* n) { //Get urgent request position
+	int idx = 0;
+	while (n != NULL) {
+		if (n->urgency == HITNO)
+			 return idx;
+		n = n->next;
+		idx++;
+	}
+	return 0;
 }
 
 int countList(NodeRequest* n) 

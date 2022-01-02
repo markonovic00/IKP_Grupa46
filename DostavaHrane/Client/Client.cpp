@@ -26,11 +26,6 @@ struct studentInfo {
 	short poeni;
 };
 
-struct replyClient {
-	u_short port;
-	bool accepted;
-};
-
 
 struct clientCall {
 	char food_name[20];
@@ -109,6 +104,7 @@ int main()
 	strcpy_s(order.food_name, "Kineska");
 	order.quantity = htons(2);
 	order.urgency = NORMALNO;
+	int i = 0;
 
 	while (true)
 	{
@@ -152,7 +148,10 @@ int main()
 		// Slanje pripremljene poruke zapisane unutar strukture studentInfo
 		//prosledjujemo adresu promenljive student u memoriji, jer se na toj adresi nalaze podaci koje saljemo
 		//kao i velicinu te strukture (jer je to duzina poruke u bajtima)
-		iResult = send(connectSocket, (char*)&clientOrder, (int)sizeof(NodeRequest), 0);
+		for (i = 0; i < 2000; i++) {
+			iResult = send(connectSocket, (char*)&clientOrder, (int)sizeof(NodeRequest), 0);
+			Sleep(1);
+		}
 
 		// Check result of send function
 		if (iResult == SOCKET_ERROR)
@@ -165,7 +164,7 @@ int main()
 
 		printf("Message successfully sent. Total bytes: %ld\n", iResult);
 
-		iResult = recv(connectSocket, dataBuffer, BUFFER_SIZE, 0);
+		/*iResult = recv(connectSocket, dataBuffer, BUFFER_SIZE, 0);
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
 			dataBuffer[iResult] = '\0';
@@ -178,7 +177,7 @@ int main()
 		if (iReply.accepted > 0) {
 			printf("Porudzbina prihvacena, cekajte dostavljaca.\n");
 
-		}
+		}*/
 
 		printf("\nPress 'x' to exit or any other key to continue: ");
 		if (getch() == 'x')

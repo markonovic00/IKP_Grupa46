@@ -139,13 +139,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="hashtable.cpp" />
     <ClCompile Include="request.cpp" />
-    <ClCompile Include="serverthread.cpp" />
     <ClCompile Include="Service.cpp" />
+    <ClCompile Include="thread.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="hashtable.h" />
     <ClInclude Include="request.h" />
-    <ClInclude Include="serverthread.h" />
+    <ClInclude Include="mythread.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

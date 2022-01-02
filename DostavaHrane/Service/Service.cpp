@@ -7,8 +7,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "conio.h"
+#include <process.h>
+
 #include "../Common/delivery.h"
-#include "../Common/request.h"
+#include "request.h"
+#include "mythread.h"
+#include "hashtable.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
@@ -17,7 +21,7 @@
 #pragma pack(1)
 
 #define SERVER_PORT 27016
-#define BUFFER_SIZE 512
+#define BUFFER_SIZE 1024
 #define MAX_CLIENTS 100
 
 
@@ -26,12 +30,6 @@ struct studentInfo {
 	char prezime[20];
 	short poeni;
 };
-
-struct replyClient {
-	u_short port;
-	bool accepted;
-};
-
 
 struct clientCall {
 	char food_name[20];
@@ -43,6 +41,9 @@ struct clientCall {
 // TCP server that use non-blocking sockets
 int main()
 {
+
+	ghMutex = CreateMutex(NULL, FALSE, NULL);
+
 	// Socket used for listening for new clients 
 	SOCKET listenSocket = INVALID_SOCKET;
 
@@ -134,12 +135,28 @@ int main()
 	timeVal.tv_sec = 1;
 	timeVal.tv_usec = 0;
 
+	HANDLE requestsHandle[50];
+	int requestsCounter = 0;
+	threadStruct threadArgs;
 
+	HANDLE createReqHandle[200];
+	int createCounter = 0;
+	activeStruct createArgs;
+	HashTable* activeDelivery = create_table(CAPACITY);
+	
+
+	//dummy test
 	studentInfo* student;
 	clientCall* order;
 	NodeRequest* head = NULL;
 	NodeRequest* clientOrder;
 	replyClient reply;
+	NodeRequest* retVal=(NodeRequest*)malloc(sizeof(NodeRequest));
+	//test
+
+	threadArgs.head = &head;
+	createArgs.ht = activeDelivery;
+	createArgs.head = &head;
 
 	while (true)
 	{
@@ -235,11 +252,37 @@ int main()
 						printf("Adresa: %s %s \n",clientOrder->address,clientOrder->city);
 						printf("Dummy cena: %d\n", clientOrder->price);
 						printf("_______________________________ \n");
-						appendList(&head, clientOrder->foodName, clientOrder->address, clientOrder->city, ntohs(clientOrder->quantity), clientOrder->price, clientOrder->urgency);
+						//appendList(&head, clientOrder->foodName, clientOrder->address, clientOrder->city, ntohs(clientOrder->quantity), clientOrder->price, clientOrder->urgency);
+
+						threadArgs.data = clientOrder;
+						requestsHandle[requestsCounter] = (HANDLE)_beginthreadex(0, 0, &createRequest, &threadArgs, 0, 0);
+						WaitForSingleObject(requestsHandle[requestsCounter], 200);//Ako neuspesno izbaci thread
+						CloseHandle(requestsHandle[requestsCounter]);
+						requestsCounter++;
+						if (requestsCounter >= 50)
+							requestsCounter = 0;
+						/*printList(head);
+						getNode(head, &retVal, 2);
+						printf("ID getnode:%d\n",retVal->idOrder);
+						deleteNode(&head, 2);
+						printList(head);*/
 						printf("_______________________________BrojZahteva: %d \n", countList(head));
+						
+						createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
+						WaitForSingleObject(createReqHandle[createCounter], 200);
+						CloseHandle(createReqHandle[createCounter]);
+						createCounter++;
+						if (createCounter >= 200)
+							createCounter = 0;
+						printf("_______________________________SkinutiBrojZahteva: %d \n", countList(head));
+
+						//int position = findPosition(head); //pronadjemo hitan zahtev ako nema uzimamo prvi na cekanju
+						//getNode(head, &retVal, position+1);
+						//printf("%d,%s,%d\n", retVal.idOrder, retVal.foodName, retVal.urgency);
+
 						reply.accepted = 1;
 						reply.port = 9000+countList(head); // poigrati se sa portovima
-						iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
+						//iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
 
 						// Check result of send function
 						if (iResult == SOCKET_ERROR)
@@ -250,7 +293,7 @@ int main()
 							return 1;
 						}
 
-						printf("Message successfully sent. Total bytes: %ld\n", iResult);
+						//printf("Message successfully sent. Total bytes: %ld\n", iResult);
 
 					}
 					else if (iResult == 0)
@@ -286,6 +329,26 @@ int main()
 				}
 			}
 		}
+		/*while (countList(head) > 0 && activeDelivery->count<CAPACITY)
+		{
+			createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
+			WaitForSingleObject(createReqHandle[createCounter], 200);
+			CloseHandle(createReqHandle[createCounter]);
+			createCounter++;
+			if (createCounter >= 200)
+				createCounter = 0;
+			printf("_______________________________SkinutiBrojZahteva: %d \n", countList(head));
+		}*/
+		//if (countList(head) > 0) {
+		//	//SKidamo zahteve od spolja
+		//	createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
+		//	WaitForSingleObject(createReqHandle[createCounter], 200);
+		//	CloseHandle(createReqHandle[createCounter]);
+		//	createCounter++;
+		//	if (createCounter >= 50)
+		//		createCounter = 0;
+		//	printf("_______________________________SkinutiBrojZahteva: %d \n", countList(head));
+		//}
 	}
 
 	//Close listen and accepted sockets

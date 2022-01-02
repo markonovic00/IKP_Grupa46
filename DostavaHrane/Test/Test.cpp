@@ -107,6 +107,8 @@ int main(int argc, char* argv[])
 	HashTable* ht = create_table(CAPACITY);
 	ht_insert(ht, (char*)"9000", (char*)"10000");
 	ht_insert(ht, (char*)"9001", (char*)"10001");
+	ht_insert_auto_val(ht, (char*)"8000");
+	
 	int keyNeki = ht_insert(ht, (char*)"9000", (char*)"10002"); //Hash tablea mu kaze na kojem portu da otvara i sta :D
 	//Value je isti broj porta kao i key samo 10k a ne 9k 
 	printf("%d\n", keyNeki);

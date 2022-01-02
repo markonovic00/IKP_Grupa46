@@ -4,7 +4,7 @@
 #pragma warning( disable : 4996)
 
 unsigned long hash_function(unsigned i) {
-	return i%CAPACITY;
+	return i % CAPACITY;
 }
 unsigned long hash_function(char* str) {
 	unsigned long i = 0;
@@ -62,6 +62,11 @@ char* ht_search(HashTable* table, char* key) {
 	return NULL;
 }
 
+Ht_item* ht_get_item_pointer(HashTable* table, char* key) {
+	int index = hash_function(atoi(key));
+	return (Ht_item*)table->items[index];
+}
+
 int ht_insert(HashTable* table, char* key, char* value) { //void bila
 	// Create the item
 	Ht_item* item = create_item(key, value);
@@ -95,7 +100,7 @@ int ht_insert(HashTable* table, char* key, char* value) { //void bila
 			oldKey++;
 			char newKey[20];
 			itoa(oldKey, newKey, 10);
-			return ht_insert(table,newKey, value);
+			return ht_insert(table, newKey, value);
 			//strcpy(table->items[index]->value, value); //Samo ovo ostaje i if i return
 			//return;
 		}

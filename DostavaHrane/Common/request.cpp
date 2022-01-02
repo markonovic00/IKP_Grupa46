@@ -1,6 +1,7 @@
 #include "request.h"
-
+#include <string.h>
 #include <stdio.h>
+#include <corecrt_malloc.h>
 
 void printList(NodeRequest* n) {
 	while (n != NULL) {
@@ -10,7 +11,7 @@ void printList(NodeRequest* n) {
 	}
 }
 
-void appendList(NodeRequest** head_ref, char* _foodName, char* _address, char* _city, char _quantity, u_short _price, Urgency _urgency)
+void appendList(NodeRequest** head_ref, char* _foodName, char* _address, char* _city, char _quantity, short _price, Urgency _urgency)
 {
 
 	NodeRequest* last = *head_ref;
