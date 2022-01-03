@@ -6,7 +6,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "conio.h"
+#include <process.h>
 #include "../Common/delivery.h"
+#include "clientthread.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
@@ -100,12 +102,12 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	//promenljiva tipa studentInfo cija ce se polja popunuti i cela struktira poslati u okviru jedne poruke
-	delivererRequest request;
+	HANDLE clientHandle;
+	delivererStruct* request;
 
 	while (true)
 	{
-		printf("Enter za slanje podatka \n");
+		//printf("Enter za slanje podatka \n");
 		// Unos potrebnih podataka koji ce se poslati serveru
 		//printf("Unesite ime studenta: ");
 		//gets_s(student.ime, 15);
@@ -140,15 +142,36 @@ int main(int argc, char** argv)
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
 			dataBuffer[iResult] = '\0';
-			request = *(delivererRequest *)dataBuffer;
-			printf("Data: %s\n", dataBuffer);
+			request = (delivererStruct *)dataBuffer;
+			int clientPort = ntohs(request->clientPort);
+			int serverPort = ntohs(request->serverPort);
+			bool clientSigned = request->clientSigned;
+			printf("Data: %d %d %d\n",clientPort,serverPort,clientSigned);
+			request->clientSigned = TRUE; // SAMO TEST
+			Sleep(100);
+			iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
+
+			//clientHandle = (HANDLE)_beginthreadex(0, 0, &createClient, request, 0, 0);
+			//WaitForSingleObject(clientHandle, INFINITE);
+			//CloseHandle(clientHandle);
+			while (request->clientSigned == FALSE)
+			{
+				//SEND RADI TEK KADA DOBIJE POTPIS OD KLIJENTA, STO CE MORATI DA CEKA U JEDNOM IF ILI NESTO...
+				if (request->clientSigned == TRUE) 
+				{
+					//iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
+				}
+				Sleep(200);
+			}
+			if (request->clientSigned == TRUE)
+				break;
 		}
 
-		iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
+		
 
-		printf("\nPress 'x' to exit or any other key to continue: ");
-		if (getch() == 'x')
-			break;
+		//printf("\nPress 'x' to exit or any other key to continue: ");
+		//if (getch() == 'x')
+		//	break;
 	}
 
 	// Shutdown the connection since we're done

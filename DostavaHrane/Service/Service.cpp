@@ -245,31 +245,26 @@ int main()
 						//jer znamo format u kom je poruka poslata 
 						clientOrder = (NodeRequest*)dataBuffer;
 						clientOrder->price = 1000;
-						printf("Naziv hrane: %s  \n", clientOrder->foodName);
+						/*printf("Naziv hrane: %s  \n", clientOrder->foodName);
 
 						printf("Kolicina: %d  \n", ntohs(clientOrder->quantity));
 						printf("Hitnost: %d \n", clientOrder->urgency);
 						printf("Adresa: %s %s \n",clientOrder->address,clientOrder->city);
 						printf("Dummy cena: %d\n", clientOrder->price);
-						printf("_______________________________ \n");
+						printf("_______________________________ \n");*/
 						//appendList(&head, clientOrder->foodName, clientOrder->address, clientOrder->city, ntohs(clientOrder->quantity), clientOrder->price, clientOrder->urgency);
 
 						threadArgs.data = clientOrder;
 						requestsHandle[requestsCounter] = (HANDLE)_beginthreadex(0, 0, &createRequest, &threadArgs, 0, 0);
-						WaitForSingleObject(requestsHandle[requestsCounter], 200);//Ako neuspesno izbaci thread
+						//WaitForSingleObject(requestsHandle[requestsCounter], 200);//Ako neuspesno izbaci thread
 						CloseHandle(requestsHandle[requestsCounter]);
 						requestsCounter++;
 						if (requestsCounter >= 50)
 							requestsCounter = 0;
-						/*printList(head);
-						getNode(head, &retVal, 2);
-						printf("ID getnode:%d\n",retVal->idOrder);
-						deleteNode(&head, 2);
-						printList(head);*/
 						printf("_______________________________BrojZahteva: %d \n", countList(head));
 						
 						createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
-						WaitForSingleObject(createReqHandle[createCounter], 200);
+						//WaitForSingleObject(createReqHandle[createCounter], 200);
 						CloseHandle(createReqHandle[createCounter]);
 						createCounter++;
 						if (createCounter >= 200)
@@ -329,26 +324,6 @@ int main()
 				}
 			}
 		}
-		/*while (countList(head) > 0 && activeDelivery->count<CAPACITY)
-		{
-			createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
-			WaitForSingleObject(createReqHandle[createCounter], 200);
-			CloseHandle(createReqHandle[createCounter]);
-			createCounter++;
-			if (createCounter >= 200)
-				createCounter = 0;
-			printf("_______________________________SkinutiBrojZahteva: %d \n", countList(head));
-		}*/
-		//if (countList(head) > 0) {
-		//	//SKidamo zahteve od spolja
-		//	createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
-		//	WaitForSingleObject(createReqHandle[createCounter], 200);
-		//	CloseHandle(createReqHandle[createCounter]);
-		//	createCounter++;
-		//	if (createCounter >= 50)
-		//		createCounter = 0;
-		//	printf("_______________________________SkinutiBrojZahteva: %d \n", countList(head));
-		//}
 	}
 
 	//Close listen and accepted sockets

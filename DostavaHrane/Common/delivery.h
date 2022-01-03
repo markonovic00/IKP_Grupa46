@@ -1,10 +1,10 @@
 #ifndef DELIVERY_DOT_H
 #define DELIVERY_DOT_H
-#include <WinSock2.h>
 
-struct delivererRequest {
-	u_short serverPort;
-	u_short clientPort;
+struct delivererStruct {
+	int serverPort;
+	int clientPort;
+	bool clientSigned;
 };
 
 #endif // !DELIVERY_DOT_H

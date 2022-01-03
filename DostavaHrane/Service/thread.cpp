@@ -1,5 +1,6 @@
 #include "mythread.h"
 #include <stdio.h>
+#include <process.h>
 #pragma warning( disable : 4996)
 
 unsigned int __stdcall createRequest(void* data) {
@@ -9,7 +10,7 @@ unsigned int __stdcall createRequest(void* data) {
 	NodeRequest* dataLoc = (NodeRequest*)struc->data;
 
 	WaitForSingleObject(ghMutex, INFINITE);
-	//for(int i=0;i<100;i++)
+	//for(int i=0;i<50;i++)
 		appendList(head, dataLoc->foodName, dataLoc->address, dataLoc->city, ntohs(dataLoc->quantity), dataLoc->price, dataLoc->urgency);
 
 	printf("Thread wirting %d:\n",countList(*head));
@@ -25,23 +26,39 @@ unsigned int __stdcall getRequest(void* data) {
 	NodeRequest** head = (NodeRequest**)struc->head;
 	HashTable* ht = (HashTable*)struc->ht;
 	NodeRequest* retVal = (NodeRequest*)malloc(sizeof(NodeRequest));
+	innerDelivererStruct delivererStruc;
+	HANDLE serverHandle;
 	while (countList(*head) > 0 && ht->count < CAPACITY) 
 	{
-		WaitForSingleObject(ghMutex, INFINITE);
+		
 
 		int urgentIdx = findPosition(*head);
 		getNode(*head, &retVal, urgentIdx);
 
-		int port = 10000 + retVal->idOrder;
-		//int clientPort = 10000 + retVal->idOrder + CAPACITY; //htsadrzi(servis_delivery_port,client_delivery_port);
+		int emptyIdx = ht_get_empty_index(ht);
+		int port = 10000 + emptyIdx;
+		int clientPort = 10000 + emptyIdx + CAPACITY; //htsadrzi(servis_delivery_port,client_delivery_port);
 		//client_delivery_port=servis_delivery_port+CAPACITY (od ht)
 		char chPort[6];
+		char chclientPort[6];
 		itoa(port, chPort, 10);
-		int insertedKey = ht_insert_auto_val(ht, chPort);// sam dodaje port u odnosu na capacity
+		itoa(clientPort, chclientPort, 10);
+		WaitForSingleObject(ghMutex, INFINITE);
+		int insertedKey = ht_insert(ht, chPort, chclientPort);
+		delivererStruc.clientPort = clientPort;
+		delivererStruc.serverPort = port;
+		delivererStruc.clientSigned = FALSE;
+		delivererStruc.ht = ht;
 
 		//BRISEMO SAMO AKO IMA SLOBODNIH DOSTAVLJACA
 		if (insertedKey != -1)
+		{
 			deleteNode(head, urgentIdx); // obrisemo zahtev 
+			printf("HTITEMS %d\n",ht->count);
+			serverHandle = (HANDLE)_beginthreadex(0, 0, &serverTherad, &delivererStruc, 0, 0); //Svaki thread otvara svoj server, zbog iscitavanja porta da ne bude problema...
+			WaitForSingleObject(serverHandle, INFINITE);
+			CloseHandle(serverHandle);
+		}
 		//free_item(); //za brisanje podataka
 
 		//free(retVal);
@@ -54,22 +71,28 @@ unsigned int __stdcall getRequest(void* data) {
 
 unsigned int __stdcall serverTherad(void* data) {
 
-	int port = *(int*)data;
-
+	innerDelivererStruct* struc = (innerDelivererStruct*)data;
+	int port = struc->serverPort;
+	int clientPort = struc->clientPort;
+	struc->serverPort = htons(port);
+	struc->clientPort = htons(clientPort);
+	struc->clientSigned = FALSE;
+	HashTable* ht = (HashTable*)struc->ht;
+	WaitForSingleObject(ghMutex, INFINITE);
 	WSADATA wsa;
 	SOCKET s, new_socket;
 	struct sockaddr_in server, client;
 	int c;
 	char dataBuffer[BUFFER_SIZE];
 
-	printf("\nInitialising Winsock...");
+	//printf("\nInitialising Winsock...");
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 	{
 		printf("Failed. Error Code : %d", WSAGetLastError());
 		return 1;
 	}
 
-	printf("Initialised.\n");
+	//printf("Initialised.\n");
 
 	//Create a socket
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
@@ -77,7 +100,7 @@ unsigned int __stdcall serverTherad(void* data) {
 		printf("Could not create socket : %d", WSAGetLastError());
 	}
 
-	printf("Socket created.\n");
+	//printf("Socket created.\n");
 
 	//Prepare the sockaddr_in structure
 	server.sin_family = AF_INET;
@@ -90,14 +113,14 @@ unsigned int __stdcall serverTherad(void* data) {
 		printf("Bind failed with error code : %d", WSAGetLastError());
 	}
 
-	puts("Bind done");
+	//puts("Bind done");
 	printf("Port: %d\n", port);
 
 	//Listen to incoming connections
 	listen(s, 1);
 
 	//Accept and incoming connection
-	puts("Waiting for incoming connections...");
+	//puts("Waiting for incoming connections...");
 
 	char port_c[6];
 	itoa(port, port_c, 10);
@@ -112,17 +135,20 @@ unsigned int __stdcall serverTherad(void* data) {
 		printf("accept failed with error code : %d", WSAGetLastError());
 	}
 
+	//neblokirajucni rezim
+	//unsigned long l;
+	//ioctlsocket(new_socket, FIONREAD, &l);
 
-	unsigned long l;
-	ioctlsocket(new_socket, FIONREAD, &l);
-
-	puts("Connection accepted");
+	//puts("Connection accepted");
 
 	//Reply to client
-	strcpy(dataBuffer, (char*)"Hello Client , I have received your connection. But I have to go now, bye\n");
-	send(new_socket, (char*)dataBuffer, strlen(dataBuffer), 0);
+	//strcpy(dataBuffer, (char*)"Hello Client , I have received your connection. But I have to go now, bye\n");
+	//send(new_socket, (char*)dataBuffer, strlen(dataBuffer), 0);
+	send(new_socket, (char*)struc, (int)(sizeof(delivererStruct)),0);
 
-	int iResult;
+	int iResult=1;
+	delivererStruct* reply;
+	Ht_item* htItem;
 
 	while (true) {
 
@@ -131,22 +157,22 @@ unsigned int __stdcall serverTherad(void* data) {
 		if (iResult > 0)
 		{
 			dataBuffer[iResult] = '\0';
-			//printf("Message received from client (%d):\n");
 
 			//primljenoj poruci u memoriji pristupiti preko pokazivaca 
 			//jer znamo format u kom je poruka poslata 
-			//order = (clientCall*)dataBuffer;
+			
+			reply = (delivererStruct*)dataBuffer;
+			if (TRUE)
+			{
+				htItem=ht_get_item_pointer(ht, port_c);
+				//free_item(htItem); // Oslobodjeno mesto u memoriji 
+				printf("ServerThreadHTITEMS: %d\n", ht->count);
+				printf("HT_ITEM %s\n", htItem->key);
+				printf("HT_SEARCH %s\n", ht_search(ht, port_c));
+				break;
+			}
 
-			/*printf("Naziv hrane: %s  \n", order->food_name);
 
-			printf("Kolicina: %d  \n", ntohs(order->quantity));
-			printf("Hitnost: %d \n", ntohs(order->urgency));
-			printf("_______________________________ \n");
-			appendList(&head, order->food_name, (char*)"Dummy", (char*)"Grad", order->quantity, 100, order->urgency);
-			printf("_______________________________BrojZahteva: %d \n", countList(head));
-			reply.accepted = 1;
-			reply.port = 9000;*/
-			iResult = send(new_socket, (char*)&dataBuffer, strlen(dataBuffer), 0);
 
 			// Check result of send function
 			if (iResult == SOCKET_ERROR)
@@ -157,7 +183,7 @@ unsigned int __stdcall serverTherad(void* data) {
 				return 1;
 			}
 
-			printf("Message successfully sent. Total bytes: %ld\n", iResult);
+			//printf("Message successfully sent. Total bytes: %ld\n", iResult);
 
 		}
 		else if (iResult == 0)
@@ -176,10 +202,8 @@ unsigned int __stdcall serverTherad(void* data) {
 		}
 	}
 
-	getchar();
-
 	closesocket(s);
 	WSACleanup();
-
+	ReleaseMutex(ghMutex);
 	return 0;
 }

@@ -36,6 +36,8 @@ int ht_insert_auto_val(HashTable* table, char* key);
 void print_table(HashTable* table);
 Ht_item* ht_get_item_pointer(HashTable* table, char* key);
 
+int ht_get_empty_index(HashTable* table);
+
 #endif // !HASHTABLE_DOT_H
 
 

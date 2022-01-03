@@ -64,7 +64,8 @@ char* ht_search(HashTable* table, char* key) {
 
 Ht_item* ht_get_item_pointer(HashTable* table, char* key) {
 	int index = hash_function(atoi(key));
-	return (Ht_item*)table->items[index];
+	Ht_item* item = table->items[index];
+	return item;
 }
 
 int ht_insert(HashTable* table, char* key, char* value) { //void bila
@@ -175,4 +176,14 @@ int ht_insert_auto_val(HashTable* table, char* key) {
 			return -1;
 		}
 	}
+}
+
+int ht_get_empty_index(HashTable* table) 
+{
+	for (int i = 0; i < table->size; i++) {
+		if (table->items[i]==NULL) {
+			return i;
+		}
+	}
+	return -1;
 }

@@ -9,7 +9,7 @@
 #endif
 
 #include "hashtable.h"
-
+#include "../Common/delivery.h"
 
 
 static HANDLE ghMutex;
@@ -23,6 +23,14 @@ struct activeStruct {
 	NodeRequest** head;
 	HashTable* ht;
 };
+
+struct innerDelivererStruct {
+	int serverPort;
+	int clientPort;
+	bool clientSigned;
+	HashTable* ht;
+};
+
 
 unsigned int __stdcall createRequest(void* data);
 unsigned int __stdcall getRequest(void* data);
