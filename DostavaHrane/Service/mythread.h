@@ -22,6 +22,7 @@ struct threadStruct {
 struct activeStruct {
 	NodeRequest** head;
 	HashTable* ht;
+	replyClient* reply;
 };
 
 struct innerDelivererStruct {

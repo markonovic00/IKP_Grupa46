@@ -33,7 +33,7 @@ unsigned int __stdcall twoMain(void* data) {
 	while (1) {
 		int dt = *(int*)data;
 		WaitForSingleObject(ghMutex, INFINITE); //Bez ovoga se bore za resurs, a sa time je resurs zakljucan
-		//printf("Trhead writing: %d\n", dt);
+		printf("Trhead writing: %d\n", dt);
 		Sleep(500);
 		ReleaseMutex(ghMutex); // Resurs oslobodjen
 	}

@@ -147,19 +147,19 @@ int main(int argc, char** argv)
 			int serverPort = ntohs(request->serverPort);
 			bool clientSigned = request->clientSigned;
 			printf("Data: %d %d %d\n",clientPort,serverPort,clientSigned);
-			request->clientSigned = TRUE; // SAMO TEST
-			Sleep(100);
-			iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
-
-			//clientHandle = (HANDLE)_beginthreadex(0, 0, &createClient, request, 0, 0);
-			//WaitForSingleObject(clientHandle, INFINITE);
-			//CloseHandle(clientHandle);
+			//request->clientSigned = TRUE; // SAMO TEST
+			//Sleep(100);
+			//iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
+			Sleep(4000);
+			clientHandle = (HANDLE)_beginthreadex(0, 0, &createClient, request, 0, 0);
+			WaitForSingleObject(clientHandle, INFINITE);
+			CloseHandle(clientHandle);
 			while (request->clientSigned == FALSE)
 			{
 				//SEND RADI TEK KADA DOBIJE POTPIS OD KLIJENTA, STO CE MORATI DA CEKA U JEDNOM IF ILI NESTO...
 				if (request->clientSigned == TRUE) 
 				{
-					//iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
+					iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
 				}
 				Sleep(200);
 			}

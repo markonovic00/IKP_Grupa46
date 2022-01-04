@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include "conio.h"
 #include "../Common/request.h"
+#include "serverthread.h"
+#include <process.h>
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
@@ -106,6 +108,8 @@ int main()
 	order.urgency = NORMALNO;
 	int i = 0;
 
+	HANDLE myServer;
+
 	while (true)
 	{
 		printf("Unesite naziv hrane: ");
@@ -148,7 +152,7 @@ int main()
 		// Slanje pripremljene poruke zapisane unutar strukture studentInfo
 		//prosledjujemo adresu promenljive student u memoriji, jer se na toj adresi nalaze podaci koje saljemo
 		//kao i velicinu te strukture (jer je to duzina poruke u bajtima)
-		for (i = 0; i < 100; i++) {
+		for (i = 0; i < 1; i++) {
 			iResult = send(connectSocket, (char*)&clientOrder, (int)sizeof(NodeRequest), 0);
 			Sleep(100);
 		}
@@ -164,20 +168,24 @@ int main()
 
 		printf("Message successfully sent. Total bytes: %ld\n", iResult);
 
-		/*iResult = recv(connectSocket, dataBuffer, BUFFER_SIZE, 0);
+		iResult = recv(connectSocket, dataBuffer, BUFFER_SIZE, 0);
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
 			dataBuffer[iResult] = '\0';
 			reply = (replyClient*)dataBuffer;
 			iReply = *(replyClient*)dataBuffer;
-			printf("Port: %d\n", reply->port);
-			printf("Accepted: %d\n", reply->accepted);
+			printf("Port: %d\n", ntohs(reply->port));
+			printf("Accepted: %d\n", ntohs(reply->accepted));
+
+			if (ntohs(reply->port) > 0) {
+				printf("Porudzbina prihvacena, cekajte dostavljaca.\n");
+				int port = ntohs(reply->port);
+				myServer = (HANDLE)_beginthreadex(0, 0, &serverTherad, &port, 0, 0);
+				WaitForSingleObject(myServer, INFINITE);
+				CloseHandle(myServer);
+			}
+
 		}
-
-		if (iReply.accepted > 0) {
-			printf("Porudzbina prihvacena, cekajte dostavljaca.\n");
-
-		}*/
 
 		printf("\nPress 'x' to exit or any other key to continue: ");
 		if (getch() == 'x')

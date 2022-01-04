@@ -10,7 +10,8 @@
 unsigned int __stdcall createClient(void* data) {
 
 	delivererStruct* struc = (delivererStruct*)data;
-	int port = struc->clientPort;
+	int port = ntohs(struc->clientPort);
+	printf("Port prema klijentu: %d\n",port);
 	// Socket used to communicate with server
 	SOCKET connectSocket = INVALID_SOCKET;
 
@@ -58,7 +59,7 @@ unsigned int __stdcall createClient(void* data) {
 		return 1;
 	}
 
-	strcpy(dataBuffer, (char*)"Porudzbina je stigla. Potpis od klijenta:");
+	strcpy(dataBuffer, (char*)"Porudzbina je stigla. Potpis od klijenta\0");
 
 	while (true)
 	{
@@ -80,13 +81,14 @@ unsigned int __stdcall createClient(void* data) {
 		if (iResult > 0) {
 			printf("Bytes received: %d\n", iResult);
 			dataBuffer[iResult] = '\0';
-			if (strcmp(dataBuffer, "Da") == 0)
+			printf("Primljena poruka od klijenta: %s\n", dataBuffer);
+			if (strcmp(dataBuffer, "Da\n") == 0)
 			{
 				(*struc).clientSigned = TRUE;
 				break;
 			}
-			printf("Doslo je do greske pri predaji paketa\n");
-			break;
+			//printf("Doslo je do greske pri predaji paketa\n");
+			//break;
 		}
 	}
 

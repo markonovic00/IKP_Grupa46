@@ -10,10 +10,10 @@ unsigned int __stdcall createRequest(void* data) {
 	NodeRequest* dataLoc = (NodeRequest*)struc->data;
 
 	WaitForSingleObject(ghMutex, INFINITE);
-	//for(int i=0;i<50;i++)
+	//for(int i=0;i<30;i++)
 		appendList(head, dataLoc->foodName, dataLoc->address, dataLoc->city, ntohs(dataLoc->quantity), dataLoc->price, dataLoc->urgency);
 
-	printf("Thread wirting %d:\n",countList(*head));
+	printf("Thread writing %d:\n",countList(*head));
 
 	ReleaseMutex(ghMutex);
 
@@ -22,15 +22,16 @@ unsigned int __stdcall createRequest(void* data) {
 
 unsigned int __stdcall getRequest(void* data) {
 
+	WaitForSingleObject(ghMutex, INFINITE);
 	activeStruct* struc = (activeStruct*)data;
 	NodeRequest** head = (NodeRequest**)struc->head;
 	HashTable* ht = (HashTable*)struc->ht;
+	replyClient* rep = (replyClient*)struc->reply;
 	NodeRequest* retVal = (NodeRequest*)malloc(sizeof(NodeRequest));
 	innerDelivererStruct delivererStruc;
 	HANDLE serverHandle;
 	while (countList(*head) > 0 && ht->count < CAPACITY) 
 	{
-		
 
 		int urgentIdx = findPosition(*head);
 		getNode(*head, &retVal, urgentIdx);
@@ -43,11 +44,12 @@ unsigned int __stdcall getRequest(void* data) {
 		char chclientPort[6];
 		itoa(port, chPort, 10);
 		itoa(clientPort, chclientPort, 10);
-		WaitForSingleObject(ghMutex, INFINITE);
 		int insertedKey = ht_insert(ht, chPort, chclientPort);
 		delivererStruc.clientPort = clientPort;
 		delivererStruc.serverPort = port;
 		delivererStruc.clientSigned = FALSE;
+		(*rep).port = htons(clientPort);
+		(*rep).accepted = htons(1);
 		delivererStruc.ht = ht;
 
 		//BRISEMO SAMO AKO IMA SLOBODNIH DOSTAVLJACA
@@ -165,10 +167,11 @@ unsigned int __stdcall serverTherad(void* data) {
 			if (TRUE)
 			{
 				htItem=ht_get_item_pointer(ht, port_c);
-				//free_item(htItem); // Oslobodjeno mesto u memoriji 
+				free_item(htItem); // Oslobodjeno mesto u memoriji 
+				(*ht).count--;
 				printf("ServerThreadHTITEMS: %d\n", ht->count);
-				printf("HT_ITEM %s\n", htItem->key);
-				printf("HT_SEARCH %s\n", ht_search(ht, port_c));
+				//printf("HT_ITEM %s\n", htItem->key);
+				//printf("HT_SEARCH %s\n", ht_search(ht, port_c));
 				break;
 			}
 

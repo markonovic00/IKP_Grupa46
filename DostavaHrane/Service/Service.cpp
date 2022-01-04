@@ -157,6 +157,7 @@ int main()
 	threadArgs.head = &head;
 	createArgs.ht = activeDelivery;
 	createArgs.head = &head;
+	createArgs.reply = &reply;
 
 	while (true)
 	{
@@ -264,8 +265,8 @@ int main()
 						printf("_______________________________BrojZahteva: %d \n", countList(head));
 						
 						createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
-						//WaitForSingleObject(createReqHandle[createCounter], 200);
-						CloseHandle(createReqHandle[createCounter]);
+						WaitForSingleObject(createReqHandle[createCounter], 200);
+						//CloseHandle(createReqHandle[createCounter]);
 						createCounter++;
 						if (createCounter >= 200)
 							createCounter = 0;
@@ -275,9 +276,10 @@ int main()
 						//getNode(head, &retVal, position+1);
 						//printf("%d,%s,%d\n", retVal.idOrder, retVal.foodName, retVal.urgency);
 
-						reply.accepted = 1;
-						reply.port = 9000+countList(head); // poigrati se sa portovima
-						//iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
+						//prethodni thread popunjava reply
+						Sleep(3000);
+						printf("Poslato klijentu port\n");
+						iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
 
 						// Check result of send function
 						if (iResult == SOCKET_ERROR)
