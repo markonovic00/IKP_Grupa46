@@ -171,3 +171,24 @@ int ht_insert_auto_val(HashTable* table, char* key) {
 		}
 	}
 }
+
+int ht_get_empty_index(HashTable* table)
+{
+	for (int i = 0; i < table->size; i++) {
+		if (table->items[i] == NULL) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+Ht_item* ht_get_item_pointer(HashTable* table, char* key) {
+	int index = hash_function(atoi(key));
+	Ht_item* item = table->items[index];
+	return item;
+}
+
+void ht_set_item_NULL(HashTable* table, char* key) {
+	int index = hash_function(atoi(key));
+	(*table).items[index] = NULL;
+}

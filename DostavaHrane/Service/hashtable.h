@@ -38,6 +38,8 @@ Ht_item* ht_get_item_pointer(HashTable* table, char* key);
 
 int ht_get_empty_index(HashTable* table);
 
+void ht_set_item_NULL(HashTable* table, char* key);
+
 #endif // !HASHTABLE_DOT_H
 
 

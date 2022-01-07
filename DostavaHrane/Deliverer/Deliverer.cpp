@@ -78,13 +78,16 @@ int main(int argc, char** argv)
 		WSACleanup();
 		return 1;
 	}
-	int port = 9000;
+	int port;
 	
 	
 	//scanf("%d", &port);
-	if(argc>1)
+	if (argc > 1)
 		port = atoi(argv[1]);
+	else
+		port = 8000;
 	printf("Deliverer started on port: %d\n",port);
+
 
 	// Create and initialize address structure
 	sockaddr_in serverAddress;
@@ -107,36 +110,6 @@ int main(int argc, char** argv)
 
 	while (true)
 	{
-		//printf("Enter za slanje podatka \n");
-		// Unos potrebnih podataka koji ce se poslati serveru
-		//printf("Unesite ime studenta: ");
-		//gets_s(student.ime, 15);
-
-		//printf("Unesite prezime studenta: ");
-		//gets_s(student.prezime, 20);
-
-		//printf("Unesite osvojene poene na testu: ");
-		//scanf("%d", &poeni);
-		//student.poeni = htons(poeni);  //obavezna funkcija htons() jer cemo slati podatak tipa short 
-		//getchar();    //pokupiti enter karakter iz bafera tastature
-
-
-		// Slanje pripremljene poruke zapisane unutar strukture studentInfo
-		//prosledjujemo adresu promenljive student u memoriji, jer se na toj adresi nalaze podaci koje saljemo
-		//kao i velicinu te strukture (jer je to duzina poruke u bajtima)
-		// 
-		//iResult = send(connectSocket, (char*)&order, (int)sizeof(clientCall), 0);
-
-		// Check result of send function
-		if (iResult == SOCKET_ERROR)
-		{
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(connectSocket);
-			WSACleanup();
-			return 1;
-		}
-
-		//printf("Message successfully sent. Total bytes: %ld\n", iResult);
 
 		iResult = recv(connectSocket, dataBuffer, BUFFER_SIZE, 0);
 		if (iResult > 0) {
@@ -150,28 +123,19 @@ int main(int argc, char** argv)
 			//request->clientSigned = TRUE; // SAMO TEST
 			//Sleep(100);
 			//iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
-			Sleep(4000);
+			Sleep(500);
 			clientHandle = (HANDLE)_beginthreadex(0, 0, &createClient, request, 0, 0);
-			WaitForSingleObject(clientHandle, INFINITE);
+			DWORD result=WaitForSingleObject(clientHandle, INFINITE);
 			CloseHandle(clientHandle);
-			while (request->clientSigned == FALSE)
-			{
-				//SEND RADI TEK KADA DOBIJE POTPIS OD KLIJENTA, STO CE MORATI DA CEKA U JEDNOM IF ILI NESTO...
-				if (request->clientSigned == TRUE) 
-				{
-					iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
-				}
-				Sleep(200);
-			}
+			printf("Waiting to receive confiramtion from client\n");
+			printf("Signed:%d\n", request->clientSigned);
 			if (request->clientSigned == TRUE)
+			{
+				iResult = send(connectSocket, (char*)request, strlen(dataBuffer), 0);
+				printf("Data sent %d\n", iResult);
 				break;
+			}
 		}
-
-		
-
-		//printf("\nPress 'x' to exit or any other key to continue: ");
-		//if (getch() == 'x')
-		//	break;
 	}
 
 	// Shutdown the connection since we're done

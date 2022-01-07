@@ -74,31 +74,31 @@ int main(int argc, char* argv[])
 	head->next = NULL;
 
 	int i = 0;
-	for (i = 9000; i < 9100; i++) {
-		printf("Hash funckija za brojeve: %d\n", hash(i));
-	}
+	//for (i = 9000; i < 9100; i++) {
+	//	printf("Hash funckija za brojeve: %d\n", hash(i));
+	//}
 
-	HANDLE myhandle[100];
-	DWORD threadRes[100];
+	//HANDLE myhandle[100];
+	//DWORD threadRes[100];
 
-	for (i = 0; i < 100; i++)
-	{
-		myhandle[i] = (HANDLE)_beginthreadex(0, 0, &mythread, head, 0, 0); // Pokrene thread
-		//threadRes[i] = WaitForSingleObject(myhandle[i], INFINITE); // Polako ide jedan po jedan
-		//if (threadRes[i] == WAIT_OBJECT_0)
-			//printf("zavrsen %d\n", threadRes[i]);
-	}
+	//for (i = 0; i < 100; i++)
+	//{
+	//	myhandle[i] = (HANDLE)_beginthreadex(0, 0, &mythread, head, 0, 0); // Pokrene thread
+	//	//threadRes[i] = WaitForSingleObject(myhandle[i], INFINITE); // Polako ide jedan po jedan
+	//	//if (threadRes[i] == WAIT_OBJECT_0)
+	//		//printf("zavrsen %d\n", threadRes[i]);
+	//}
 
-	for (i = 0; i < 100; i++)  // izvrsi uporedo sve
-	{
-		threadRes[i] = WaitForSingleObject(myhandle[i], INFINITE);
-		if (threadRes[i] == WAIT_OBJECT_0)
-			printf("zavrsen %d\n", threadRes[i]);
-		CloseHandle(myhandle[i]);
-	}
+	//for (i = 0; i < 100; i++)  // izvrsi uporedo sve
+	//{
+	//	threadRes[i] = WaitForSingleObject(myhandle[i], INFINITE);
+	//	if (threadRes[i] == WAIT_OBJECT_0)
+	//		printf("zavrsen %d\n", threadRes[i]);
+	//	CloseHandle(myhandle[i]);
+	//}
 
-	printf("Nakon threadova\n");
-	printf("ID: %d \n %s-%d-%d\n%s %s\n", head->idOrder, head->foodName, head->quantity, head->price, head->address, head->city);
+	//printf("Nakon threadova\n");
+	//printf("ID: %d \n %s-%d-%d\n%s %s\n", head->idOrder, head->foodName, head->quantity, head->price, head->address, head->city);
 
 #pragma region HashTable
 
@@ -114,32 +114,38 @@ int main(int argc, char* argv[])
 	printf("%d\n", keyNeki);
 	
 
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < 100; i++) {
 		hashHandle[i] = (HANDLE)_beginthreadex(0, 0, &hashThread, ht, 0, 0);
 	}
 
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < 100; i++) {
 		WaitForSingleObject(hashHandle[i], 300);
 		CloseHandle(hashHandle[i]);
 	}
 	print_table(ht);
-	free_table(ht);
+
+    ht_set_item_NULL(ht, (char*)"8000");
+
+	//printf("%s\n", ht->items[1000]->value);
+	printf("%d\n", ht_get_empty_index(ht));
+
+	//free_table(ht);
 #pragma endregion
 
-	HANDLE main[2];
-	int a = 0;
-	int b = 1;
-	main[0] = (HANDLE)_beginthreadex(0, 0, &twoMain, &a, 0, 0);
-	main[1]= (HANDLE)_beginthreadex(0, 0, &twoMain, &b, 0, 0);
-	WaitForSingleObject(main[0], 500); // RADI KOLIKO ZELIS
-	WaitForSingleObject(main[1], 500); // RADI KOLIKO ZELIS
-	CloseHandle(main[0]);
-	CloseHandle(main[1]);
+	//HANDLE main[2];
+	//int a = 0;
+	//int b = 1;
+	//main[0] = (HANDLE)_beginthreadex(0, 0, &twoMain, &a, 0, 0);
+	//main[1]= (HANDLE)_beginthreadex(0, 0, &twoMain, &b, 0, 0);
+	//WaitForSingleObject(main[0], 500); // RADI KOLIKO ZELIS
+	//WaitForSingleObject(main[1], 500); // RADI KOLIKO ZELIS
+	//CloseHandle(main[0]);
+	//CloseHandle(main[1]);
 
-	HANDLE server[2];
+	//HANDLE server[2];
 
-	int port1 = 8888;
-	int port2 = 9999;
+	//int port1 = 8888;
+	//int port2 = 9999;
 	
 
 	//server[0] = (HANDLE)_beginthreadex(0, 0, &serverTherad, &port1, 0, 0);

@@ -152,10 +152,10 @@ int main()
 		// Slanje pripremljene poruke zapisane unutar strukture studentInfo
 		//prosledjujemo adresu promenljive student u memoriji, jer se na toj adresi nalaze podaci koje saljemo
 		//kao i velicinu te strukture (jer je to duzina poruke u bajtima)
-		for (i = 0; i < 1; i++) {
+		for (i = 0; i < 10; i++) {
 			iResult = send(connectSocket, (char*)&clientOrder, (int)sizeof(NodeRequest), 0);
 			Sleep(100);
-		}
+		
 
 		// Check result of send function
 		if (iResult == SOCKET_ERROR)
@@ -180,11 +180,12 @@ int main()
 			if (ntohs(reply->port) > 0) {
 				printf("Porudzbina prihvacena, cekajte dostavljaca.\n");
 				int port = ntohs(reply->port);
-				myServer = (HANDLE)_beginthreadex(0, 0, &serverTherad, &port, 0, 0);
-				WaitForSingleObject(myServer, INFINITE);
-				CloseHandle(myServer);
+				//myServer = (HANDLE)_beginthreadex(0, 0, &serverTherad, &port, 0, 0);
+				//WaitForSingleObject(myServer, INFINITE);
+				//CloseHandle(myServer);
 			}
 
+		}
 		}
 
 		printf("\nPress 'x' to exit or any other key to continue: ");

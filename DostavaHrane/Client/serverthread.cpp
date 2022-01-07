@@ -78,7 +78,7 @@ unsigned int __stdcall serverTherad(void* data) {
             dataBuffer[iResult] = '\0';
             printf("Message received from client %s:\n",dataBuffer);
             printf("Enter za dalje...\n");
-            getchar();
+            //getchar(); //SKLONJENO ZBOG TESITRANJA
             strcpy(dataBuffer, (char*)"Da\n");
             iResult = send(new_socket, (char*)&dataBuffer, strlen(dataBuffer), 0);
 
@@ -109,8 +109,6 @@ unsigned int __stdcall serverTherad(void* data) {
             break;
         }
     }
-
-    getchar();
 
     closesocket(s);
     WSACleanup();

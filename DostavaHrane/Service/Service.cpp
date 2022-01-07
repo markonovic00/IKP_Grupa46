@@ -257,7 +257,7 @@ int main()
 
 						threadArgs.data = clientOrder;
 						requestsHandle[requestsCounter] = (HANDLE)_beginthreadex(0, 0, &createRequest, &threadArgs, 0, 0);
-						//WaitForSingleObject(requestsHandle[requestsCounter], 200);//Ako neuspesno izbaci thread
+						WaitForSingleObject(requestsHandle[requestsCounter], 10);//Ako neuspesno izbaci thread
 						CloseHandle(requestsHandle[requestsCounter]);
 						requestsCounter++;
 						if (requestsCounter >= 50)
@@ -266,7 +266,7 @@ int main()
 						
 						createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
 						WaitForSingleObject(createReqHandle[createCounter], 200);
-						//CloseHandle(createReqHandle[createCounter]);
+						CloseHandle(createReqHandle[createCounter]);
 						createCounter++;
 						if (createCounter >= 200)
 							createCounter = 0;
@@ -277,7 +277,7 @@ int main()
 						//printf("%d,%s,%d\n", retVal.idOrder, retVal.foodName, retVal.urgency);
 
 						//prethodni thread popunjava reply
-						Sleep(3000);
+						//Sleep(3000);
 						printf("Poslato klijentu port\n");
 						iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
 

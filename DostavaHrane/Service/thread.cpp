@@ -1,6 +1,7 @@
 #include "mythread.h"
 #include <stdio.h>
 #include <process.h>
+#include <time.h>
 #pragma warning( disable : 4996)
 
 unsigned int __stdcall createRequest(void* data) {
@@ -10,10 +11,10 @@ unsigned int __stdcall createRequest(void* data) {
 	NodeRequest* dataLoc = (NodeRequest*)struc->data;
 
 	WaitForSingleObject(ghMutex, INFINITE);
-	//for(int i=0;i<30;i++)
+	//for(int i=0;i<5;i++)
 		appendList(head, dataLoc->foodName, dataLoc->address, dataLoc->city, ntohs(dataLoc->quantity), dataLoc->price, dataLoc->urgency);
 
-	printf("Thread writing %d:\n",countList(*head));
+	printf("createRequestThread writing listCount: %d\n",countList(*head));
 
 	ReleaseMutex(ghMutex);
 
@@ -22,7 +23,12 @@ unsigned int __stdcall createRequest(void* data) {
 
 unsigned int __stdcall getRequest(void* data) {
 
-	WaitForSingleObject(ghMutex, INFINITE);
+	clock_t begin = clock();
+
+	/* here, do your time-consuming job */
+
+	
+	
 	activeStruct* struc = (activeStruct*)data;
 	NodeRequest** head = (NodeRequest**)struc->head;
 	HashTable* ht = (HashTable*)struc->ht;
@@ -32,7 +38,8 @@ unsigned int __stdcall getRequest(void* data) {
 	HANDLE serverHandle;
 	while (countList(*head) > 0 && ht->count < CAPACITY) 
 	{
-
+		WaitForSingleObject(ghMutex, INFINITE);
+		printf("GetRequestThread Writing mutex \n");
 		int urgentIdx = findPosition(*head);
 		getNode(*head, &retVal, urgentIdx);
 
@@ -56,14 +63,19 @@ unsigned int __stdcall getRequest(void* data) {
 		if (insertedKey != -1)
 		{
 			deleteNode(head, urgentIdx); // obrisemo zahtev 
-			printf("HTITEMS %d\n",ht->count);
-			serverHandle = (HANDLE)_beginthreadex(0, 0, &serverTherad, &delivererStruc, 0, 0); //Svaki thread otvara svoj server, zbog iscitavanja porta da ne bude problema...
-			WaitForSingleObject(serverHandle, INFINITE);
-			CloseHandle(serverHandle);
+			//printf("HTITEMS %d\n",ht->count);
+			ReleaseMutex(ghMutex);
+			//serverHandle = (HANDLE)_beginthreadex(0, 0, &serverTherad, &delivererStruc, 0, 0); //Svaki thread otvara svoj server, zbog iscitavanja porta da ne bude problema...
+			//WaitForSingleObject(serverHandle, INFINITE);
+			//CloseHandle(serverHandle);
 		}
 		//free_item(); //za brisanje podataka
 
 		//free(retVal);
+
+		clock_t end = clock();
+		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+		printf("Time INSIDE SERVER CREATOR THREAD: %f s\n",time_spent);
 
 		ReleaseMutex(ghMutex);
 	}
@@ -80,7 +92,9 @@ unsigned int __stdcall serverTherad(void* data) {
 	struc->clientPort = htons(clientPort);
 	struc->clientSigned = FALSE;
 	HashTable* ht = (HashTable*)struc->ht;
-	WaitForSingleObject(ghMutex, INFINITE);
+	char chPort[6];
+	itoa(port, chPort, 10);
+	
 	WSADATA wsa;
 	SOCKET s, new_socket;
 	struct sockaddr_in server, client;
@@ -90,7 +104,9 @@ unsigned int __stdcall serverTherad(void* data) {
 	//printf("\nInitialising Winsock...");
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 	{
+		WaitForSingleObject(ghMutex, INFINITE);
 		printf("Failed. Error Code : %d", WSAGetLastError());
+		ReleaseMutex(ghMutex);
 		return 1;
 	}
 
@@ -99,7 +115,9 @@ unsigned int __stdcall serverTherad(void* data) {
 	//Create a socket
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
+		WaitForSingleObject(ghMutex, INFINITE);
 		printf("Could not create socket : %d", WSAGetLastError());
+		ReleaseMutex(ghMutex);
 	}
 
 	//printf("Socket created.\n");
@@ -112,11 +130,13 @@ unsigned int __stdcall serverTherad(void* data) {
 	//Bind
 	if (bind(s, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
 	{
+		WaitForSingleObject(ghMutex, INFINITE);
 		printf("Bind failed with error code : %d", WSAGetLastError());
+		ReleaseMutex(ghMutex);
 	}
 
 	//puts("Bind done");
-	printf("Port: %d\n", port);
+	//printf("Port: %d\n", port);
 
 	//Listen to incoming connections
 	listen(s, 1);
@@ -134,7 +154,9 @@ unsigned int __stdcall serverTherad(void* data) {
 	new_socket = accept(s, (struct sockaddr*)&client, &c);
 	if (new_socket == INVALID_SOCKET)
 	{
+		WaitForSingleObject(ghMutex, INFINITE);
 		printf("accept failed with error code : %d", WSAGetLastError());
+		ReleaseMutex(ghMutex);
 	}
 
 	//neblokirajucni rezim
@@ -164,43 +186,35 @@ unsigned int __stdcall serverTherad(void* data) {
 			//jer znamo format u kom je poruka poslata 
 			
 			reply = (delivererStruct*)dataBuffer;
-			if (TRUE)
+			if (reply->clientSigned)
 			{
-				htItem=ht_get_item_pointer(ht, port_c);
-				free_item(htItem); // Oslobodjeno mesto u memoriji 
+				WaitForSingleObject(ghMutex, INFINITE);
+				ht_set_item_NULL(ht, chPort);
 				(*ht).count--;
 				printf("ServerThreadHTITEMS: %d\n", ht->count);
 				//printf("HT_ITEM %s\n", htItem->key);
 				//printf("HT_SEARCH %s\n", ht_search(ht, port_c));
+				ReleaseMutex(ghMutex);
 				break;
 			}
-
-
-
-			// Check result of send function
-			if (iResult == SOCKET_ERROR)
-			{
-				printf("send failed with error: %d\n", WSAGetLastError());
-				closesocket(new_socket);
-				WSACleanup();
-				return 1;
-			}
-
-			//printf("Message successfully sent. Total bytes: %ld\n", iResult);
 
 		}
 		else if (iResult == 0)
 		{
+			WaitForSingleObject(ghMutex, INFINITE);
 			// connection was closed gracefully
 			printf("Connection with client closed.\n");
 			closesocket(new_socket);
+			ReleaseMutex(ghMutex);
 			break;
 		}
 		else
 		{
+			WaitForSingleObject(ghMutex, INFINITE);
 			// there was an error during recv
-			printf("recv failed with error: %d\n", WSAGetLastError());
+			printf("SERVERTHREAD recv failed with error: %d\n", WSAGetLastError());
 			closesocket(new_socket);
+			ReleaseMutex(ghMutex);
 			break;
 		}
 	}

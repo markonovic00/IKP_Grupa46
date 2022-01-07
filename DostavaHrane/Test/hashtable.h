@@ -33,6 +33,8 @@ char* ht_search(HashTable* table, char* key);
 int ht_insert(HashTable* table, char* key, char* value);
 int ht_insert_auto_val(HashTable* table, char* key);
 
+void ht_set_item_NULL(HashTable* table, char* key);
+
 int ht_get_empty_index(HashTable* table);
 
 void print_table(HashTable* table);
