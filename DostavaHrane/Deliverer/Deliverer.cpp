@@ -22,29 +22,6 @@
 #define BUFFER_SIZE 512
 
 
-struct studentInfo {
-	char ime[15];
-	char prezime[20];
-	short poeni;
-};
-
-struct replyClient {
-	u_short port;
-	bool accepted;
-};
-
-enum Urgency {
-	NORMALNO,
-	HITNO,
-	JAKO_HITNO,
-};
-
-struct clientCall {
-	char food_name[20];
-	short quantity;
-	Urgency urgency;
-};
-
 // TCP client that use non-blocking sockets
 int main(int argc, char** argv)
 {
@@ -120,10 +97,8 @@ int main(int argc, char** argv)
 			int serverPort = ntohs(request->serverPort);
 			bool clientSigned = request->clientSigned;
 			printf("Data: %d %d %d\n",clientPort,serverPort,clientSigned);
-			//request->clientSigned = TRUE; // SAMO TEST
-			//Sleep(100);
-			//iResult = send(connectSocket, (char*)&dataBuffer, strlen(dataBuffer), 0);
-			Sleep(500);
+
+			//Sleep(500);
 			clientHandle = (HANDLE)_beginthreadex(0, 0, &createClient, request, 0, 0);
 			DWORD result=WaitForSingleObject(clientHandle, INFINITE);
 			CloseHandle(clientHandle);

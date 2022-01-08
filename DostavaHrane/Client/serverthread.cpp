@@ -63,10 +63,6 @@ unsigned int __stdcall serverTherad(void* data) {
 
     puts("Connection accepted");
 
-    //Reply to client
-    //strcpy(dataBuffer, (char*)"Hello Client , I have received your connection. But I have to go now, bye\n");
-    //send(new_socket, (char*)dataBuffer, strlen(dataBuffer), 0);
-
     int iResult;
 
     while (true) {

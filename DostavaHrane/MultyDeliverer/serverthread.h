@@ -2,7 +2,7 @@
 #define SERVERTHREAD_DOT_H
 #define BUFFER_SIZE 512
 #ifndef WINDOWS_DOT_H
-#include <Windows.h>
+
 #endif // !1
 
 #include "../Common/delivery.h"
@@ -17,6 +17,9 @@ struct innerDelivererStruct {
 };
 
 unsigned int __stdcall serverTherad(void* data);
+unsigned int __stdcall multiServer(void* data);
+unsigned int __stdcall clientThread(void* data);
+unsigned int __stdcall clientCommunication(void* data);
 
 #endif // !SERVERTHREAD_DOT_H
 

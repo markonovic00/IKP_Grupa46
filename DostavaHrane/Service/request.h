@@ -27,6 +27,7 @@ void deleteNode(NodeRequest** head_ref, int position);
 int countList(NodeRequest* n);
 int findPosition(NodeRequest* n);
 void getNode(NodeRequest* head, NodeRequest** retVal, int position);
+void deleteSameRequest(NodeRequest** n, NodeRequest* cmpNode);
 
 #endif // !REQUEST_DOT_H
 

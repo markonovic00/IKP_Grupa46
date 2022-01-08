@@ -22,13 +22,6 @@
 #define BUFFER_SIZE 512
 
 
-struct studentInfo {
-	char ime[15];
-	char prezime[20];
-	short poeni;
-};
-
-
 struct clientCall {
 	char food_name[20];
 	short quantity;
@@ -86,10 +79,6 @@ int main()
 		return 1;
 	}
 
-	//promenljiva tipa studentInfo cija ce se polja popunuti i cela struktira poslati u okviru jedne poruke
-	studentInfo student;
-	short poeni;
-
 	clientCall order;
 	int quantity=0;
 	int hitnost=0;
@@ -143,18 +132,12 @@ int main()
 		scanf("%s", clientOrder.city);
 		fflush(stdin);
 		
-		//printf("Unesite osvojene poene na testu: ");
-		//scanf("%d", &poeni);
-		//student.poeni = htons(poeni);  //obavezna funkcija htons() jer cemo slati podatak tipa short 
 		getchar();    //pokupiti enter karakter iz bafera tastature
 
 
-		// Slanje pripremljene poruke zapisane unutar strukture studentInfo
-		//prosledjujemo adresu promenljive student u memoriji, jer se na toj adresi nalaze podaci koje saljemo
-		//kao i velicinu te strukture (jer je to duzina poruke u bajtima)
-		for (i = 0; i < 10; i++) {
+		for (i = 0; i < 20; i++) {
 			iResult = send(connectSocket, (char*)&clientOrder, (int)sizeof(NodeRequest), 0);
-			Sleep(100);
+			Sleep(10);
 		
 
 		// Check result of send function
@@ -180,9 +163,9 @@ int main()
 			if (ntohs(reply->port) > 0) {
 				printf("Porudzbina prihvacena, cekajte dostavljaca.\n");
 				int port = ntohs(reply->port);
-				//myServer = (HANDLE)_beginthreadex(0, 0, &serverTherad, &port, 0, 0);
-				//WaitForSingleObject(myServer, INFINITE);
-				//CloseHandle(myServer);
+				myServer = (HANDLE)_beginthreadex(0, 0, &serverTherad, &port, 0, 0);
+				WaitForSingleObject(myServer, INFINITE);
+				CloseHandle(myServer);
 			}
 
 		}

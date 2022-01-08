@@ -92,6 +92,17 @@ int findPosition(NodeRequest* n) { //Get urgent request position
 	return 0;
 }
 
+void deleteSameRequest(NodeRequest** n, NodeRequest* cmpNode)
+{
+	int idx=0;
+	while ((*n) != NULL) {
+		if (strcmp((*n)->address, cmpNode->address))
+			deleteNode(n, idx);
+		(*n) = (*n)->next;
+		idx++;
+	}
+}
+
 int countList(NodeRequest* n) 
 {
 	int count = 0;

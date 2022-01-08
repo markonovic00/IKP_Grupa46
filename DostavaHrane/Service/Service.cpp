@@ -25,19 +25,6 @@
 #define MAX_CLIENTS 100
 
 
-struct studentInfo {
-	char ime[15];
-	char prezime[20];
-	short poeni;
-};
-
-struct clientCall {
-	char food_name[20];
-	short quantity;
-	Urgency urgency;
-};
-
-
 // TCP server that use non-blocking sockets
 int main()
 {
@@ -144,15 +131,9 @@ int main()
 	activeStruct createArgs;
 	HashTable* activeDelivery = create_table(CAPACITY);
 	
-
-	//dummy test
-	studentInfo* student;
-	clientCall* order;
 	NodeRequest* head = NULL;
 	NodeRequest* clientOrder;
 	replyClient reply;
-	NodeRequest* retVal=(NodeRequest*)malloc(sizeof(NodeRequest));
-	//test
 
 	threadArgs.head = &head;
 	createArgs.ht = activeDelivery;
@@ -246,15 +227,7 @@ int main()
 						//jer znamo format u kom je poruka poslata 
 						clientOrder = (NodeRequest*)dataBuffer;
 						clientOrder->price = 1000;
-						/*printf("Naziv hrane: %s  \n", clientOrder->foodName);
-
-						printf("Kolicina: %d  \n", ntohs(clientOrder->quantity));
-						printf("Hitnost: %d \n", clientOrder->urgency);
-						printf("Adresa: %s %s \n",clientOrder->address,clientOrder->city);
-						printf("Dummy cena: %d\n", clientOrder->price);
-						printf("_______________________________ \n");*/
-						//appendList(&head, clientOrder->foodName, clientOrder->address, clientOrder->city, ntohs(clientOrder->quantity), clientOrder->price, clientOrder->urgency);
-
+						
 						threadArgs.data = clientOrder;
 						requestsHandle[requestsCounter] = (HANDLE)_beginthreadex(0, 0, &createRequest, &threadArgs, 0, 0);
 						WaitForSingleObject(requestsHandle[requestsCounter], 10);//Ako neuspesno izbaci thread
@@ -271,13 +244,6 @@ int main()
 						if (createCounter >= 200)
 							createCounter = 0;
 						printf("_______________________________SkinutiBrojZahteva: %d \n", countList(head));
-
-						//int position = findPosition(head); //pronadjemo hitan zahtev ako nema uzimamo prvi na cekanju
-						//getNode(head, &retVal, position+1);
-						//printf("%d,%s,%d\n", retVal.idOrder, retVal.foodName, retVal.urgency);
-
-						//prethodni thread popunjava reply
-						//Sleep(3000);
 						printf("Poslato klijentu port\n");
 						iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
 

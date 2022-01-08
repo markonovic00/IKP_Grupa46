@@ -24,10 +24,6 @@ unsigned int __stdcall createRequest(void* data) {
 unsigned int __stdcall getRequest(void* data) {
 
 	clock_t begin = clock();
-
-	/* here, do your time-consuming job */
-
-	
 	
 	activeStruct* struc = (activeStruct*)data;
 	NodeRequest** head = (NodeRequest**)struc->head;
@@ -63,15 +59,12 @@ unsigned int __stdcall getRequest(void* data) {
 		if (insertedKey != -1)
 		{
 			deleteNode(head, urgentIdx); // obrisemo zahtev 
-			//printf("HTITEMS %d\n",ht->count);
+			deleteSameRequest(head, retVal);//Obrisemo isti zahtev ako je ista adresa, jer dostavljac nosi na istu adresu
 			ReleaseMutex(ghMutex);
-			//serverHandle = (HANDLE)_beginthreadex(0, 0, &serverTherad, &delivererStruc, 0, 0); //Svaki thread otvara svoj server, zbog iscitavanja porta da ne bude problema...
-			//WaitForSingleObject(serverHandle, INFINITE);
-			//CloseHandle(serverHandle);
+			serverHandle = (HANDLE)_beginthreadex(0, 0, &serverTherad, &delivererStruc, 0, 0); //Svaki thread otvara svoj server, zbog iscitavanja porta da ne bude problema...
+			WaitForSingleObject(serverHandle, INFINITE);
+			CloseHandle(serverHandle);
 		}
-		//free_item(); //za brisanje podataka
-
-		//free(retVal);
 
 		clock_t end = clock();
 		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -101,7 +94,6 @@ unsigned int __stdcall serverTherad(void* data) {
 	int c;
 	char dataBuffer[BUFFER_SIZE];
 
-	//printf("\nInitialising Winsock...");
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 	{
 		WaitForSingleObject(ghMutex, INFINITE);
@@ -110,8 +102,6 @@ unsigned int __stdcall serverTherad(void* data) {
 		return 1;
 	}
 
-	//printf("Initialised.\n");
-
 	//Create a socket
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
@@ -119,8 +109,6 @@ unsigned int __stdcall serverTherad(void* data) {
 		printf("Could not create socket : %d", WSAGetLastError());
 		ReleaseMutex(ghMutex);
 	}
-
-	//printf("Socket created.\n");
 
 	//Prepare the sockaddr_in structure
 	server.sin_family = AF_INET;
@@ -164,10 +152,6 @@ unsigned int __stdcall serverTherad(void* data) {
 	//ioctlsocket(new_socket, FIONREAD, &l);
 
 	//puts("Connection accepted");
-
-	//Reply to client
-	//strcpy(dataBuffer, (char*)"Hello Client , I have received your connection. But I have to go now, bye\n");
-	//send(new_socket, (char*)dataBuffer, strlen(dataBuffer), 0);
 	send(new_socket, (char*)struc, (int)(sizeof(delivererStruct)),0);
 
 	int iResult=1;
@@ -191,9 +175,7 @@ unsigned int __stdcall serverTherad(void* data) {
 				WaitForSingleObject(ghMutex, INFINITE);
 				ht_set_item_NULL(ht, chPort);
 				(*ht).count--;
-				printf("ServerThreadHTITEMS: %d\n", ht->count);
-				//printf("HT_ITEM %s\n", htItem->key);
-				//printf("HT_SEARCH %s\n", ht_search(ht, port_c));
+				//printf("ServerThreadHTITEMS: %d\n", ht->count);
 				ReleaseMutex(ghMutex);
 				break;
 			}
