@@ -28,6 +28,9 @@
 // TCP server that use non-blocking sockets
 int main()
 {
+	int maxDeliveres = 1;
+	printf("Unesite maksimaln broj dostavljaca: ");
+	scanf("%d", &maxDeliveres);
 
 	ghMutex = CreateMutex(NULL, FALSE, NULL);
 
@@ -130,15 +133,14 @@ int main()
 	int createCounter = 0;
 	activeStruct createArgs;
 	HashTable* activeDelivery = create_table(CAPACITY);
-	
+	activeDelivery->maxDeliverers = maxDeliveres;
+
 	NodeRequest* head = NULL;
 	NodeRequest* clientOrder;
-	replyClient reply;
 
 	threadArgs.head = &head;
 	createArgs.ht = activeDelivery;
 	createArgs.head = &head;
-	createArgs.reply = &reply;
 
 	while (true)
 	{
@@ -172,6 +174,12 @@ int main()
 			{
 				_getch();
 				printf("Waiting...\n");
+			}
+			if (activeDelivery->maxDeliverers > maxDeliveres)
+			{
+				//Smanjujemo dostavljace dok ne dodjemo do prvobitno zaposlenog broja
+				printf("Otkaz dostavljacima im ih previse----------------------!\n");
+				delistDeliverers(activeDelivery);
 			}
 			continue;
 		}
@@ -223,6 +231,11 @@ int main()
 						dataBuffer[iResult] = '\0';
 						printf("Message received from client (%d):\n", i + 1);
 
+						if (activeDelivery->count == activeDelivery->maxDeliverers) {
+							printf("Zaposlite novog dostavljaca----------------------!\n");
+							enlistMoreDeliverers(activeDelivery);
+						}
+
 						//primljenoj poruci u memoriji pristupiti preko pokazivaca 
 						//jer znamo format u kom je poruka poslata 
 						clientOrder = (NodeRequest*)dataBuffer;
@@ -237,27 +250,29 @@ int main()
 							requestsCounter = 0;
 						printf("_______________________________BrojZahteva: %d \n", countList(head));
 						
+						createArgs.sender = &clientSockets[i];
+
 						createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
-						WaitForSingleObject(createReqHandle[createCounter], 200);
+						//WaitForSingleObject(createReqHandle[createCounter], INFINITE);
 						CloseHandle(createReqHandle[createCounter]);
 						createCounter++;
 						if (createCounter >= 200)
 							createCounter = 0;
 						printf("_______________________________SkinutiBrojZahteva: %d \n", countList(head));
-						printf("Poslato klijentu port\n");
-						iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
+						//printf("Poslato klijentu port\n");
+						//iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
 
-						// Check result of send function
-						if (iResult == SOCKET_ERROR)
-						{
-							printf("send failed with error: %d\n", WSAGetLastError());
-							closesocket(clientSockets[i]);
-							WSACleanup();
-							return 1;
-						}
+						//// Check result of send function
+						//if (iResult == SOCKET_ERROR)
+						//{
+						//	printf("send failed with error: %d\n", WSAGetLastError());
+						//	closesocket(clientSockets[i]);
+						//	WSACleanup();
+						//	return 1;
+						//}
 
 						//printf("Message successfully sent. Total bytes: %ld\n", iResult);
-
+						
 					}
 					else if (iResult == 0)
 					{

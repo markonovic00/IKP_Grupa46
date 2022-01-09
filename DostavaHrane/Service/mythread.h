@@ -22,7 +22,7 @@ struct threadStruct {
 struct activeStruct {
 	NodeRequest** head;
 	HashTable* ht;
-	replyClient* reply;
+	SOCKET* sender;
 };
 
 struct innerDelivererStruct {
@@ -36,6 +36,8 @@ struct innerDelivererStruct {
 unsigned int __stdcall createRequest(void* data);
 unsigned int __stdcall getRequest(void* data);
 unsigned int __stdcall serverTherad(void* data);
+unsigned int __stdcall enlistMoreDeliverers(void* data);
+unsigned int __stdcall delistDeliverers(void* data);
 
 #endif // !THREAD_DOT_H
 

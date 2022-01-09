@@ -135,9 +135,9 @@ int main()
 		getchar();    //pokupiti enter karakter iz bafera tastature
 
 
-		for (i = 0; i < 20; i++) {
+		for (i = 0; i < 100; i++) {
 			iResult = send(connectSocket, (char*)&clientOrder, (int)sizeof(NodeRequest), 0);
-			Sleep(10);
+			Sleep(10); //Problem jednog klijenta sa puno zahteva, nekada send ne prodje sa servera, thread se zavrsi
 		
 
 		// Check result of send function
@@ -169,6 +169,7 @@ int main()
 			}
 
 		}
+		//Sleep(50);
 		}
 
 		printf("\nPress 'x' to exit or any other key to continue: ");

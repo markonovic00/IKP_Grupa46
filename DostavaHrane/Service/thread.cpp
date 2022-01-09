@@ -14,7 +14,7 @@ unsigned int __stdcall createRequest(void* data) {
 	//for(int i=0;i<5;i++)
 		appendList(head, dataLoc->foodName, dataLoc->address, dataLoc->city, ntohs(dataLoc->quantity), dataLoc->price, dataLoc->urgency);
 
-	printf("createRequestThread writing listCount: %d\n",countList(*head));
+	//printf("createRequestThread writing listCount: %d\n",countList(*head));
 
 	ReleaseMutex(ghMutex);
 
@@ -24,17 +24,19 @@ unsigned int __stdcall createRequest(void* data) {
 unsigned int __stdcall getRequest(void* data) {
 
 	clock_t begin = clock();
-	
+	WaitForSingleObject(ghMutex, INFINITE);
 	activeStruct* struc = (activeStruct*)data;
 	NodeRequest** head = (NodeRequest**)struc->head;
 	HashTable* ht = (HashTable*)struc->ht;
-	replyClient* rep = (replyClient*)struc->reply;
+	SOCKET* clientSocket = (SOCKET*)struc->sender;
 	NodeRequest* retVal = (NodeRequest*)malloc(sizeof(NodeRequest));
+	replyClient reply;
+	int iResult = 0;
 	innerDelivererStruct delivererStruc;
 	HANDLE serverHandle;
-	while (countList(*head) > 0 && ht->count < CAPACITY) 
+	while (countList(*head) > 0 && ht->count < ht->maxDeliverers)
 	{
-		WaitForSingleObject(ghMutex, INFINITE);
+		//WaitForSingleObject(ghMutex, INFINITE);
 		printf("GetRequestThread Writing mutex \n");
 		int urgentIdx = findPosition(*head);
 		getNode(*head, &retVal, urgentIdx);
@@ -51,10 +53,23 @@ unsigned int __stdcall getRequest(void* data) {
 		delivererStruc.clientPort = clientPort;
 		delivererStruc.serverPort = port;
 		delivererStruc.clientSigned = FALSE;
-		(*rep).port = htons(clientPort);
-		(*rep).accepted = htons(1);
 		delivererStruc.ht = ht;
+		reply.port = htons(clientPort);
+		reply.accepted = htons(1);
 
+		//PROBLEM MOGUCI JE TO STO PRI VECEM BROJU ZAHTEVA KLINET NEKADA NE DOBIJE PORT JER SE THREAD PREBRZO ZVRSI
+		printf("Poslato klijentu port\n");
+		iResult = send(*clientSocket, (char*)&reply, (int)sizeof(replyClient), 0);
+
+		// Check result of send function
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(*clientSocket);
+			WSACleanup();
+			return 1;
+		}
+		
 		//BRISEMO SAMO AKO IMA SLOBODNIH DOSTAVLJACA
 		if (insertedKey != -1)
 		{
@@ -204,5 +219,27 @@ unsigned int __stdcall serverTherad(void* data) {
 	closesocket(s);
 	WSACleanup();
 	ReleaseMutex(ghMutex);
+	return 0;
+}
+
+
+unsigned int __stdcall enlistMoreDeliverers(void* data) {
+
+	WaitForSingleObject(ghMutex, 10);
+	HashTable* ht = (HashTable*)data;
+	if(ht->maxDeliverers+3<=CAPACITY)
+	(*ht).maxDeliverers += 3;
+	ReleaseMutex(ghMutex);
+
+	return 0;
+}
+
+unsigned int __stdcall delistDeliverers(void* data) {
+	WaitForSingleObject(ghMutex, 10);
+	HashTable* ht = (HashTable*)data;
+
+	(*ht).maxDeliverers -= 1;
+	ReleaseMutex(ghMutex);
+
 	return 0;
 }

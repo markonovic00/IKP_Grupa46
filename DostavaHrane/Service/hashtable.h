@@ -1,6 +1,6 @@
 #ifndef HASHTABLE_DOT_H
 #define HASHTABLE_DOT_H
-#define CAPACITY 10 //Size of the Hash Table (Maksimalan broj aktivnih dostavljaca) 
+#define CAPACITY 200 //Size of the Hash Table (Maksimalan broj aktivnih dostavljaca) 
 
 typedef struct Ht_item Ht_item;
 struct  Ht_item
@@ -14,6 +14,7 @@ struct HashTable {
     Ht_item** items;
     int size;
     int count;
+    int maxDeliverers;
 };
 
 #include <corecrt_malloc.h>
