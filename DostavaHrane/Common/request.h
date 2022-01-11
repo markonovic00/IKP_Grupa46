@@ -1,6 +1,6 @@
 #ifndef REQUEST_DOT_H
 #define REQUEST_DOT_H
-enum Urgency {
+enum Urgency { //Koristi klijent
 	NORMALNO,
 	HITNO,
 };
@@ -10,13 +10,13 @@ struct NodeRequest {
 	char foodName[20];
 	char address[20];
 	char city[15];
-	char quantity;
+	short quantity;
 	short price;
 	Urgency urgency;
 	struct NodeRequest* next;
 };
 
-struct replyClient {
+struct replyClient { //Koristi klijent da izvuce odgovor o potvrdi od strane servera
 	short port;
 	bool accepted;
 };

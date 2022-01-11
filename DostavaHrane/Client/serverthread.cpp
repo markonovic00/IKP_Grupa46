@@ -13,14 +13,14 @@ unsigned int __stdcall serverTherad(void* data) {
     int c;
     char dataBuffer[BUFFER_SIZE];
 
-    printf("\nInitialising Winsock...");
+    //printf("\nInitialising Winsock...");
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
     {
         printf("Failed. Error Code : %d", WSAGetLastError());
         return 1;
     }
 
-    printf("Initialised.\n");
+   // printf("Initialised.\n");
 
     //Create a socket
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
@@ -28,7 +28,7 @@ unsigned int __stdcall serverTherad(void* data) {
         printf("Could not create socket : %d", WSAGetLastError());
     }
 
-    printf("Socket created.\n");
+    //printf("Socket created.\n");
 
     //Prepare the sockaddr_in structure
     server.sin_family = AF_INET;
@@ -41,14 +41,14 @@ unsigned int __stdcall serverTherad(void* data) {
         printf("Bind failed with error code : %d", WSAGetLastError());
     }
 
-    puts("Bind done");
-    printf("Port: %d\n", port);
+    //puts("Bind done");
+    //printf("Port: %d\n", port);
 
     //Listen to incoming connections
     listen(s, 1);
 
     //Accept and incoming connection
-    puts("Waiting for incoming connections...");
+    puts("\t\tWaiting for incoming connections...");
 
     c = sizeof(struct sockaddr_in);
     new_socket = accept(s, (struct sockaddr*)&client, &c);
@@ -61,7 +61,7 @@ unsigned int __stdcall serverTherad(void* data) {
     unsigned long l;
     ioctlsocket(new_socket, FIONREAD, &l);
 
-    puts("Connection accepted");
+    puts("\t\tConnection accepted");
 
     int iResult;
 
@@ -72,8 +72,8 @@ unsigned int __stdcall serverTherad(void* data) {
         if (iResult > 0)
         {
             dataBuffer[iResult] = '\0';
-            printf("Message received from client %s:\n",dataBuffer);
-            printf("Enter za dalje...\n");
+            printf("\t\tDostavljac salje %s\n",dataBuffer);
+            printf("\t\tEnter za dalje...\n");
             //getchar(); //SKLONJENO ZBOG TESITRANJA
             strcpy(dataBuffer, (char*)"Da\n");
             iResult = send(new_socket, (char*)&dataBuffer, strlen(dataBuffer), 0);
@@ -87,7 +87,7 @@ unsigned int __stdcall serverTherad(void* data) {
                 return 1;
             }
 
-            printf("Message successfully sent. Total bytes: %ld\n", iResult);
+            printf("\t\tMessage successfully sent. Total bytes: %ld\n", iResult);
 
         }
         else if (iResult == 0)

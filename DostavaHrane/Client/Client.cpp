@@ -22,12 +22,6 @@
 #define BUFFER_SIZE 512
 
 
-struct clientCall {
-	char food_name[20];
-	short quantity;
-	Urgency urgency;
-};
-
 
 // TCP client that use non-blocking sockets
 int main()
@@ -79,7 +73,6 @@ int main()
 		return 1;
 	}
 
-	clientCall order;
 	int quantity=0;
 	int hitnost=0;
 	Urgency urgency;
@@ -92,9 +85,6 @@ int main()
 	clientOrder.urgency = NORMALNO;
 	clientOrder.quantity = htons(0);
 
-	strcpy_s(order.food_name, "Kineska");
-	order.quantity = htons(2);
-	order.urgency = NORMALNO;
 	int i = 0;
 
 	HANDLE myServer;
@@ -126,7 +116,7 @@ int main()
 		}
 
 		printf("Unesite ulicu i broj: "); // proveriti unos stringa...
-		scanf("%[^\n]%*c", clientOrder.address);
+		scanf("%s", clientOrder.address);
 		fflush(stdin);
 		printf("Unesite grad: ");
 		scanf("%s", clientOrder.city);
@@ -134,7 +124,7 @@ int main()
 		
 		getchar();    //pokupiti enter karakter iz bafera tastature
 
-
+		printf("______________________________________________________\n");
 		for (i = 0; i < 100; i++) {
 			iResult = send(connectSocket, (char*)&clientOrder, (int)sizeof(NodeRequest), 0);
 			Sleep(10); //Problem jednog klijenta sa puno zahteva, nekada send ne prodje sa servera, thread se zavrsi
@@ -157,22 +147,22 @@ int main()
 			dataBuffer[iResult] = '\0';
 			reply = (replyClient*)dataBuffer;
 			iReply = *(replyClient*)dataBuffer;
-			printf("Port: %d\n", ntohs(reply->port));
-			printf("Accepted: %d\n", ntohs(reply->accepted));
+			printf("\tPort: %d\n", ntohs(reply->port));
+			printf("\tAccepted: %d\n", ntohs(reply->accepted));
 
 			if (ntohs(reply->port) > 0) {
-				printf("Porudzbina prihvacena, cekajte dostavljaca.\n");
+				printf("\tPorudzbina prihvacena, cekajte dostavljaca.\n");
 				int port = ntohs(reply->port);
 				myServer = (HANDLE)_beginthreadex(0, 0, &serverTherad, &port, 0, 0);
 				WaitForSingleObject(myServer, INFINITE);
 				CloseHandle(myServer);
 			}
-
+			printf("______________________________________________________\n");
 		}
 		//Sleep(50);
 		}
 
-		printf("\nPress 'x' to exit or any other key to continue: ");
+		printf("\nPress 'x' to exit or any other key to continue: \n");
 		if (getch() == 'x')
 			break;
 	}

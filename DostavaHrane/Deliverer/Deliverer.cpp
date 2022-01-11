@@ -110,6 +110,11 @@ int main(int argc, char** argv)
 				printf("Data sent %d\n", iResult);
 				break;
 			}
+			else
+			{
+				printf("Client didn't connect...\n");
+				break;
+			}
 		}
 	}
 

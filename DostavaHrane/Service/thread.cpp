@@ -34,10 +34,30 @@ unsigned int __stdcall getRequest(void* data) {
 	int iResult = 0;
 	innerDelivererStruct delivererStruc;
 	HANDLE serverHandle;
+	if (ht == NULL) {
+		deleteNode(head, countList(*head)-1);
+
+		reply.port = htons(0);
+		reply.accepted = htons(0);
+
+		printf("Sent to client port to wait for deliverer!\n");
+		iResult = send(*clientSocket, (char*)&reply, (int)sizeof(replyClient), 0);
+
+		// Check result of send function
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(*clientSocket);
+			WSACleanup();
+			return 1;
+		}
+
+		ReleaseMutex(ghMutex);
+		return 0;
+	}
 	while (countList(*head) > 0 && ht->count < ht->maxDeliverers)
 	{
-		//WaitForSingleObject(ghMutex, INFINITE);
-		printf("GetRequestThread Writing mutex \n");
+		//printf("GetRequestThread Writing mutex \n");
 		int urgentIdx = findPosition(*head);
 		getNode(*head, &retVal, urgentIdx);
 
@@ -58,7 +78,7 @@ unsigned int __stdcall getRequest(void* data) {
 		reply.accepted = htons(1);
 
 		//PROBLEM MOGUCI JE TO STO PRI VECEM BROJU ZAHTEVA KLINET NEKADA NE DOBIJE PORT JER SE THREAD PREBRZO ZVRSI
-		printf("Poslato klijentu port\n");
+		printf("Sent to client port to wait for deliverer!\n");
 		iResult = send(*clientSocket, (char*)&reply, (int)sizeof(replyClient), 0);
 
 		// Check result of send function
@@ -69,7 +89,6 @@ unsigned int __stdcall getRequest(void* data) {
 			WSACleanup();
 			return 1;
 		}
-		
 		//BRISEMO SAMO AKO IMA SLOBODNIH DOSTAVLJACA
 		if (insertedKey != -1)
 		{
@@ -83,10 +102,12 @@ unsigned int __stdcall getRequest(void* data) {
 
 		clock_t end = clock();
 		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-		printf("Time INSIDE SERVER CREATOR THREAD: %f s\n",time_spent);
+		printf("Delivery time until signed: %f s\n",time_spent);
 
-		ReleaseMutex(ghMutex);
 	}
+
+	ReleaseMutex(ghMutex);
+
 	return 0;
 }
 
@@ -134,8 +155,15 @@ unsigned int __stdcall serverTherad(void* data) {
 	if (bind(s, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
 	{
 		WaitForSingleObject(ghMutex, INFINITE);
-		printf("Bind failed with error code : %d", WSAGetLastError());
+		printf("Bind failed with error code : %d\n", WSAGetLastError());
+
+		ht_set_item_NULL(ht, chPort);
+		(*ht).count--;
+		printf("---------------Food not delivered---------------\n");
+
 		ReleaseMutex(ghMutex);
+
+		return 1;
 	}
 
 	//puts("Bind done");
@@ -158,8 +186,15 @@ unsigned int __stdcall serverTherad(void* data) {
 	if (new_socket == INVALID_SOCKET)
 	{
 		WaitForSingleObject(ghMutex, INFINITE);
-		printf("accept failed with error code : %d", WSAGetLastError());
+		printf("accept failed with error code : %d\n", WSAGetLastError());
+
+		ht_set_item_NULL(ht, chPort);
+		(*ht).count--;
+		printf("---------------Food not delivered---------------\n");
+
 		ReleaseMutex(ghMutex);
+
+		return 1;
 	}
 
 	//neblokirajucni rezim
@@ -202,6 +237,11 @@ unsigned int __stdcall serverTherad(void* data) {
 			// connection was closed gracefully
 			printf("Connection with client closed.\n");
 			closesocket(new_socket);
+
+			ht_set_item_NULL(ht, chPort);
+			(*ht).count--;
+			printf("---------------Food not delivered---------------\n");
+
 			ReleaseMutex(ghMutex);
 			break;
 		}
@@ -211,6 +251,11 @@ unsigned int __stdcall serverTherad(void* data) {
 			// there was an error during recv
 			printf("SERVERTHREAD recv failed with error: %d\n", WSAGetLastError());
 			closesocket(new_socket);
+
+			ht_set_item_NULL(ht, chPort);
+			(*ht).count--;
+			printf("---------------Food not delivered---------------\n");
+
 			ReleaseMutex(ghMutex);
 			break;
 		}

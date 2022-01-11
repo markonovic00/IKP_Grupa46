@@ -32,6 +32,8 @@ int main()
 	printf("Unesite maksimaln broj dostavljaca: ");
 	scanf("%d", &maxDeliveres);
 
+	int foodQuantity = 1000; //PROMENITI
+
 	ghMutex = CreateMutex(NULL, FALSE, NULL);
 
 	// Socket used for listening for new clients 
@@ -178,9 +180,19 @@ int main()
 			if (activeDelivery->maxDeliverers > maxDeliveres)
 			{
 				//Smanjujemo dostavljace dok ne dodjemo do prvobitno zaposlenog broja
-				printf("Otkaz dostavljacima im ih previse----------------------!\n");
+				printf("Disengane deliverer!\n");
 				delistDeliverers(activeDelivery);
 			}
+			
+			printf("Pending requests: %d!\n", countList(head));
+			printf("Active requests: %d!\n", activeDelivery->count);
+
+			if (foodQuantity <= 0)
+			{
+				printf("Restocking on food!\n");
+				foodQuantity = 1000;
+			}
+
 			continue;
 		}
 		else if (FD_ISSET(listenSocket, &readfds))
@@ -232,15 +244,16 @@ int main()
 						printf("Message received from client (%d):\n", i + 1);
 
 						if (activeDelivery->count == activeDelivery->maxDeliverers) {
-							printf("Zaposlite novog dostavljaca----------------------!\n");
+							printf("Engaging new deliverer!\n");
 							enlistMoreDeliverers(activeDelivery);
 						}
 
 						//primljenoj poruci u memoriji pristupiti preko pokazivaca 
 						//jer znamo format u kom je poruka poslata 
 						clientOrder = (NodeRequest*)dataBuffer;
-						clientOrder->price = 1000;
-						
+						clientOrder->price = 100 * ntohs(clientOrder->quantity); //ZAKUCANA CENA
+						foodQuantity -= ntohs(clientOrder->quantity);
+
 						threadArgs.data = clientOrder;
 						requestsHandle[requestsCounter] = (HANDLE)_beginthreadex(0, 0, &createRequest, &threadArgs, 0, 0);
 						WaitForSingleObject(requestsHandle[requestsCounter], 10);//Ako neuspesno izbaci thread
@@ -248,9 +261,17 @@ int main()
 						requestsCounter++;
 						if (requestsCounter >= 50)
 							requestsCounter = 0;
-						printf("_______________________________BrojZahteva: %d \n", countList(head));
+						//printf("_______________________________BrojZahteva: %d \n", countList(head));
 						
 						createArgs.sender = &clientSockets[i];
+
+						if (foodQuantity <= 0) {
+							printf("No more food in stock\n");
+							createArgs.ht = NULL;
+						}
+						else {
+							createArgs.ht = activeDelivery;
+						}
 
 						createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
 						//WaitForSingleObject(createReqHandle[createCounter], INFINITE);
@@ -258,21 +279,10 @@ int main()
 						createCounter++;
 						if (createCounter >= 200)
 							createCounter = 0;
-						printf("_______________________________SkinutiBrojZahteva: %d \n", countList(head));
-						//printf("Poslato klijentu port\n");
-						//iResult = send(clientSockets[i], (char*)&reply, (int)sizeof(replyClient), 0);
-
-						//// Check result of send function
-						//if (iResult == SOCKET_ERROR)
-						//{
-						//	printf("send failed with error: %d\n", WSAGetLastError());
-						//	closesocket(clientSockets[i]);
-						//	WSACleanup();
-						//	return 1;
-						//}
+						//printf("_______________________________SkinutiBrojZahteva: %d \n", countList(head));
 
 						//printf("Message successfully sent. Total bytes: %ld\n", iResult);
-						
+						printf("______________________________________________________\n");
 					}
 					else if (iResult == 0)
 					{

@@ -14,18 +14,18 @@
 
 static HANDLE ghMutex;
 
-struct threadStruct {
+struct threadStruct { //Listu da dodamo zahtev
 	NodeRequest** head;
 	NodeRequest* data;
 };
 
-struct activeStruct {
+struct activeStruct { //Ovo nam skida iz liste i ubacuje unutar HashTable
 	NodeRequest** head;
 	HashTable* ht;
 	SOCKET* sender;
 };
 
-struct innerDelivererStruct {
+struct innerDelivererStruct { //Zadrzi podatke za komunikaciju izmedju dostavljaca i servisa i dostavljaca i klijenta...
 	int serverPort;
 	int clientPort;
 	bool clientSigned;

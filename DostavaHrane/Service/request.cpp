@@ -12,7 +12,7 @@ void printList(NodeRequest* n) {
 	}
 }
 
-void appendList(NodeRequest** head_ref, char* _foodName, char* _address, char* _city, char _quantity, short _price, Urgency _urgency)
+void appendList(NodeRequest** head_ref, char* _foodName, char* _address, char* _city, short _quantity, short _price, Urgency _urgency)
 {
 
 	NodeRequest* last = *head_ref;

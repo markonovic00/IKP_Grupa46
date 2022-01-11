@@ -53,7 +53,8 @@ unsigned int __stdcall createClient(void* data) {
 	iResult = connect(connectSocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress));
 	if (iResult == SOCKET_ERROR)
 	{
-		printf("Unable to connect to server.\n");
+		printf("Unable to connect to server.Trhead writing\n");
+		(*struc).clientSigned = FALSE;
 		closesocket(connectSocket);
 		WSACleanup();
 		return 1;
