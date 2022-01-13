@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <process.h>
 #include <time.h>
+#include <string>
 #pragma warning( disable : 4996)
 
 unsigned int __stdcall createRequest(void* data) {
@@ -24,7 +25,7 @@ unsigned int __stdcall createRequest(void* data) {
 unsigned int __stdcall getRequest(void* data) {
 
 	clock_t begin = clock();
-	WaitForSingleObject(ghMutex, INFINITE);
+	MSG msg;
 	activeStruct* struc = (activeStruct*)data;
 	NodeRequest** head = (NodeRequest**)struc->head;
 	HashTable* ht = (HashTable*)struc->ht;
@@ -34,6 +35,7 @@ unsigned int __stdcall getRequest(void* data) {
 	innerDelivererStruct delivererStruc;
 	HANDLE serverHandle;
 	if (ht == NULL) {
+		WaitForSingleObject(ghMutex, INFINITE);
 		deleteNode(head, countList(*head)-1);
 
 		reply.port = htons(0);
@@ -56,6 +58,7 @@ unsigned int __stdcall getRequest(void* data) {
 	}
 	while (countList(*head) > 0 && ht->count < ht->maxDeliverers)
 	{
+		WaitForSingleObject(ghMutex, INFINITE);
 		//printf("GetRequestThread Writing mutex \n");
 		int urgentIdx = findPosition(*head);
 		NodeRequest* retVal = getNode(*head, urgentIdx);
@@ -94,8 +97,7 @@ unsigned int __stdcall getRequest(void* data) {
 		{
 			deleteNode(head, urgentIdx); // obrisemo zahtev 
 			deleteSameRequest(head, retVal);//Obrisemo isti zahtev ako je ista adresa, jer dostavljac nosi na istu adresu
-			
-			serverHandle = (HANDLE)_beginthreadex(0, 0, &serverTherad, &delivererStruc, 0, 0); //Svaki thread otvara svoj server, zbog iscitavanja porta da ne bude problema...
+			serverHandle = (HANDLE)_beginthreadex(0,0,&serverTherad, &delivererStruc,0,0); //Svaki thread otvara svoj server, zbog iscitavanja porta da ne bude problema...
 			WaitForSingleObject(serverHandle, INFINITE);
 			CloseHandle(serverHandle);
 		}
@@ -103,10 +105,10 @@ unsigned int __stdcall getRequest(void* data) {
 		clock_t end = clock();
 		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		printf("Delivery time until signed: %f s\n",time_spent);
-
+		ReleaseMutex(ghMutex);
 	}
 
-	ReleaseMutex(ghMutex);
+	//ReleaseMutex(ghMutex);
 
 	return 0;
 }
@@ -114,6 +116,7 @@ unsigned int __stdcall getRequest(void* data) {
 
 unsigned int __stdcall serverTherad(void* data) {
 
+	WaitForSingleObject(ghMutex, INFINITE);
 	innerDelivererStruct* struc = (innerDelivererStruct*)data;
 	int port = struc->serverPort;
 	int clientPort = struc->clientPort;
@@ -132,7 +135,7 @@ unsigned int __stdcall serverTherad(void* data) {
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 	{
-		WaitForSingleObject(ghMutex, INFINITE);
+		//WaitForSingleObject(ghMutex, INFINITE);
 		printf("Failed. Error Code : %d", WSAGetLastError());
 		ReleaseMutex(ghMutex);
 		return 1;
@@ -141,9 +144,9 @@ unsigned int __stdcall serverTherad(void* data) {
 	//Create a socket
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
-		WaitForSingleObject(ghMutex, INFINITE);
+		//WaitForSingleObject(ghMutex, INFINITE);
 		printf("Could not create socket : %d", WSAGetLastError());
-		ReleaseMutex(ghMutex);
+		//ReleaseMutex(ghMutex);
 	}
 
 	//Prepare the sockaddr_in structure
@@ -154,7 +157,7 @@ unsigned int __stdcall serverTherad(void* data) {
 	//Bind
 	if (bind(s, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
 	{
-		WaitForSingleObject(ghMutex, INFINITE);
+		//WaitForSingleObject(ghMutex, INFINITE);
 		printf("Bind failed with error code : %d\n", WSAGetLastError());
 
 		ht_set_item_NULL(ht, chPort);
@@ -177,15 +180,39 @@ unsigned int __stdcall serverTherad(void* data) {
 
 	char port_c[6];
 	itoa(port, port_c, 10);
-
+	std::string str(port_c);
 	//pokretanje novog dosrtavljaca
-	ShellExecuteA(GetDesktopWindow(), "open", "C:\\FAKS\\IKP_Grupa46\\DostavaHrane\\Debug\\Deliverer.exe", port_c, NULL, SW_SHOW);
+	MSG msg;
+	//ShellExecuteA(GetDesktopWindow(), "open", "C:\\FAKS\\IKP_Grupa46\\DostavaHrane\\Debug\\Deliverer.exe", port_c, NULL, SW_SHOW);
+	SHELLEXECUTEINFOW ShExecInfo = { 0 };
+	if (0 <= CoInitialize(0))
+	{
+		
+		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+		ShExecInfo.hwnd = NULL;
+		ShExecInfo.lpVerb = NULL;
+		ShExecInfo.lpFile = L"C:\\FAKS\\IKP_Grupa46\\DostavaHrane\\Debug\\Deliverer.exe";
+		int count = MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), NULL, 0);
+		std::wstring wstr(count, 0);
+		MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), &wstr[0], count);
+		ShExecInfo.lpParameters = wstr.c_str();
+		ShExecInfo.lpDirectory = NULL;
+		ShExecInfo.nShow = SW_SHOW;
+		ShExecInfo.hInstApp = NULL;
+		ShellExecuteEx(&ShExecInfo);
+		CloseHandle(ShExecInfo.hProcess);
+
+		
+
+		CoUninitialize();
+	}
 
 	c = sizeof(struct sockaddr_in);
 	new_socket = accept(s, (struct sockaddr*)&client, &c);
 	if (new_socket == INVALID_SOCKET)
 	{
-		WaitForSingleObject(ghMutex, INFINITE);
+		//WaitForSingleObject(ghMutex, INFINITE);
 		printf("accept failed with error code : %d\n", WSAGetLastError());
 
 		ht_set_item_NULL(ht, chPort);
@@ -222,19 +249,19 @@ unsigned int __stdcall serverTherad(void* data) {
 			reply = (delivererStruct*)dataBuffer;
 			if (reply->clientSigned)
 			{
-				WaitForSingleObject(ghMutex, INFINITE);
+				//WaitForSingleObject(ghMutex, INFINITE);
 				ht_set_item_NULL(ht, chPort);
 				(*ht).count--;
 				//printf("ServerThreadHTITEMS: %d\n", ht->count);
 
-				ReleaseMutex(ghMutex);
+				//ReleaseMutex(ghMutex);
 				break;
 			}
 
 		}
 		else if (iResult == 0)
 		{
-			WaitForSingleObject(ghMutex, INFINITE);
+			//WaitForSingleObject(ghMutex, INFINITE);
 			// connection was closed gracefully
 			printf("Connection with client closed.\n");
 			closesocket(new_socket);
@@ -243,12 +270,12 @@ unsigned int __stdcall serverTherad(void* data) {
 			(*ht).count--;
 			printf("---------------Food not delivered---------------\n");
 
-			ReleaseMutex(ghMutex);
+			//ReleaseMutex(ghMutex);
 			break;
 		}
 		else
 		{
-			WaitForSingleObject(ghMutex, INFINITE);
+			//WaitForSingleObject(ghMutex, INFINITE);
 			// there was an error during recv
 			printf("SERVERTHREAD recv failed with error: %d\n", WSAGetLastError());
 			closesocket(new_socket);
@@ -257,13 +284,18 @@ unsigned int __stdcall serverTherad(void* data) {
 			(*ht).count--;
 			printf("---------------Food not delivered---------------\n");
 
-			ReleaseMutex(ghMutex);
+			//ReleaseMutex(ghMutex);
 			break;
 		}
 	}
 
 	closesocket(s);
 	WSACleanup();
+
+	//WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
+	
+
+	ReleaseMutex(ghMutex);
 	return 0;
 }
 
