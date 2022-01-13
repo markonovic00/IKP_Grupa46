@@ -190,5 +190,7 @@ int ht_get_empty_index(HashTable* table)
 
 void ht_set_item_NULL(HashTable* table, char* key) {
 	int index = hash_function(atoi(key));
+	if(table->items[index]!=NULL)
+		free_item((*table).items[index]);
 	(*table).items[index] = NULL;
 }

@@ -125,7 +125,7 @@ int main()
 		getchar();    //pokupiti enter karakter iz bafera tastature
 
 		printf("______________________________________________________\n");
-		for (i = 0; i < 100; i++) {
+		for (i = 0; i < 20; i++) {
 			iResult = send(connectSocket, (char*)&clientOrder, (int)sizeof(NodeRequest), 0);
 			Sleep(10); //Problem jednog klijenta sa puno zahteva, nekada send ne prodje sa servera, thread se zavrsi
 		

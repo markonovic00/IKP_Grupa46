@@ -26,7 +26,7 @@ void appendList(NodeRequest** head_ref, char* _foodName, char* _address, char* _
 void deleteNode(NodeRequest** head_ref, int position);
 int countList(NodeRequest* n);
 int findPosition(NodeRequest* n);
-void getNode(NodeRequest* head, NodeRequest** retVal, int position);
+NodeRequest* getNode(NodeRequest* head, int position);
 void deleteSameRequest(NodeRequest** n, NodeRequest* cmpNode);
 
 #endif // !REQUEST_DOT_H

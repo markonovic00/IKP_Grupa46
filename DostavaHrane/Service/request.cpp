@@ -74,11 +74,11 @@ void deleteNode(NodeRequest** head_ref, int position)
 	temp->next = next; // Unlink the deleted node from list
 }
 
-void getNode(NodeRequest* head, NodeRequest** retVal, int position) { //Vraca index od 0,1,2..
+NodeRequest* getNode(NodeRequest* head, int position) { //Vraca index od 0,1,2..
 	for (int i = 0; head != NULL && i <= position; i++) {
-		*retVal = head;
 		head = head->next;
 	}
+	return head;
 }
 
 int findPosition(NodeRequest* n) { //Get urgent request position

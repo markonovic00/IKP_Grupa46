@@ -127,11 +127,14 @@ int main()
 	timeVal.tv_sec = 1;
 	timeVal.tv_usec = 0;
 
-	HANDLE requestsHandle[50];
+	HANDLE engDel;
+	HANDLE disEngDel;
+
+	HANDLE requestsHandle;
 	int requestsCounter = 0;
 	threadStruct threadArgs;
 
-	HANDLE createReqHandle[200];
+	HANDLE createReqHandle;
 	int createCounter = 0;
 	activeStruct createArgs;
 	HashTable* activeDelivery = create_table(CAPACITY);
@@ -181,7 +184,10 @@ int main()
 			{
 				//Smanjujemo dostavljace dok ne dodjemo do prvobitno zaposlenog broja
 				printf("Disengane deliverer!\n");
-				delistDeliverers(activeDelivery);
+				disEngDel = (HANDLE)_beginthreadex(0, 0, &delistDeliverers, activeDelivery, 0, 0);
+				WaitForSingleObject(disEngDel, INFINITE);
+				CloseHandle(disEngDel);
+				
 			}
 			
 			printf("Pending requests: %d!\n", countList(head));
@@ -245,7 +251,9 @@ int main()
 
 						if (activeDelivery->count == activeDelivery->maxDeliverers) {
 							printf("Engaging new deliverer!\n");
-							enlistMoreDeliverers(activeDelivery);
+							engDel = (HANDLE)_beginthreadex(0, 0, &enlistMoreDeliverers, activeDelivery, 0, 0);
+							WaitForSingleObject(engDel, INFINITE);
+							CloseHandle(engDel);
 						}
 
 						//primljenoj poruci u memoriji pristupiti preko pokazivaca 
@@ -255,9 +263,9 @@ int main()
 						foodQuantity -= ntohs(clientOrder->quantity);
 
 						threadArgs.data = clientOrder;
-						requestsHandle[requestsCounter] = (HANDLE)_beginthreadex(0, 0, &createRequest, &threadArgs, 0, 0);
-						WaitForSingleObject(requestsHandle[requestsCounter], 10);//Ako neuspesno izbaci thread
-						CloseHandle(requestsHandle[requestsCounter]);
+						requestsHandle = (HANDLE)_beginthreadex(0, 0, &createRequest, &threadArgs, 0, 0);
+						WaitForSingleObject(requestsHandle, 10);//Ako neuspesno izbaci thread
+						CloseHandle(requestsHandle);
 						requestsCounter++;
 						if (requestsCounter >= 50)
 							requestsCounter = 0;
@@ -273,9 +281,9 @@ int main()
 							createArgs.ht = activeDelivery;
 						}
 
-						createReqHandle[createCounter] = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
-						//WaitForSingleObject(createReqHandle[createCounter], INFINITE);
-						CloseHandle(createReqHandle[createCounter]);
+						createReqHandle = (HANDLE)_beginthreadex(0, 0, &getRequest, &createArgs, 0, 0);
+						//WaitForSingleObject(createReqHandle, INFINITE);
+						CloseHandle(createReqHandle);
 						createCounter++;
 						if (createCounter >= 200)
 							createCounter = 0;

@@ -29,7 +29,6 @@ unsigned int __stdcall getRequest(void* data) {
 	NodeRequest** head = (NodeRequest**)struc->head;
 	HashTable* ht = (HashTable*)struc->ht;
 	SOCKET* clientSocket = (SOCKET*)struc->sender;
-	NodeRequest* retVal = (NodeRequest*)malloc(sizeof(NodeRequest));
 	replyClient reply;
 	int iResult = 0;
 	innerDelivererStruct delivererStruc;
@@ -59,7 +58,7 @@ unsigned int __stdcall getRequest(void* data) {
 	{
 		//printf("GetRequestThread Writing mutex \n");
 		int urgentIdx = findPosition(*head);
-		getNode(*head, &retVal, urgentIdx);
+		NodeRequest* retVal = getNode(*head, urgentIdx);
 
 		int emptyIdx = ht_get_empty_index(ht);
 		int port = 10000 + emptyIdx;
@@ -87,6 +86,7 @@ unsigned int __stdcall getRequest(void* data) {
 			printf("send failed with error: %d\n", WSAGetLastError());
 			closesocket(*clientSocket);
 			WSACleanup();
+			ReleaseMutex(ghMutex);
 			return 1;
 		}
 		//BRISEMO SAMO AKO IMA SLOBODNIH DOSTAVLJACA
@@ -94,7 +94,7 @@ unsigned int __stdcall getRequest(void* data) {
 		{
 			deleteNode(head, urgentIdx); // obrisemo zahtev 
 			deleteSameRequest(head, retVal);//Obrisemo isti zahtev ako je ista adresa, jer dostavljac nosi na istu adresu
-			ReleaseMutex(ghMutex);
+			
 			serverHandle = (HANDLE)_beginthreadex(0, 0, &serverTherad, &delivererStruc, 0, 0); //Svaki thread otvara svoj server, zbog iscitavanja porta da ne bude problema...
 			WaitForSingleObject(serverHandle, INFINITE);
 			CloseHandle(serverHandle);
@@ -226,6 +226,7 @@ unsigned int __stdcall serverTherad(void* data) {
 				ht_set_item_NULL(ht, chPort);
 				(*ht).count--;
 				//printf("ServerThreadHTITEMS: %d\n", ht->count);
+
 				ReleaseMutex(ghMutex);
 				break;
 			}
@@ -263,7 +264,6 @@ unsigned int __stdcall serverTherad(void* data) {
 
 	closesocket(s);
 	WSACleanup();
-	ReleaseMutex(ghMutex);
 	return 0;
 }
 
